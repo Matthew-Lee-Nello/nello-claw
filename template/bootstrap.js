@@ -25,11 +25,12 @@ const TEMPLATE_DIR = dirname(new URL(import.meta.url).pathname)
 const INSTALL_PATH = process.env.NC_INSTALL_PATH || process.cwd()
 const BUNDLE_PATH = process.env.NC_BUNDLE || join(INSTALL_PATH, 'bundle.json')
 
-// Sandbox overrides - tests use these to isolate from production ~/.claude
-const SETTINGS_PATH = process.env.NC_SETTINGS_PATH || join(homedir(), '.claude', 'settings.json')
+// Sandbox overrides - tests use these to isolate from production ~/.claude.
+// SETTINGS_PATH defaults to PROJECT-SCOPED settings inside the install dir, NOT global.
+// This means bypassPermissions only applies when Claude is working in ~/nello-claw/.
+const SETTINGS_PATH = process.env.NC_SETTINGS_PATH || join(INSTALL_PATH, '.claude', 'settings.json')
 const SKILLS_DIR = process.env.NC_SKILLS_DIR || join(homedir(), '.claude', 'skills')
 const LAUNCHAGENT_LABEL = process.env.NC_LAUNCHAGENT_LABEL || 'com.nello-claw.server'
-const KEEP_BUNDLE = process.env.NC_KEEP_BUNDLE === '1'
 
 // Theme: FFA600 accent via 24-bit truecolour. Falls back gracefully on plain terminals.
 const ACCENT = '\x1b[38;2;255;166;0m'
@@ -136,7 +137,7 @@ function mergeSettingsJson(ctx) {
   merged.extraKnownMarketplaces = { ...(existing.extraKnownMarketplaces || {}), ...newSettings.extraKnownMarketplaces }
 
   writeFileSync(settingsPath, JSON.stringify(merged, null, 2))
-  ok('merged ~/.claude/settings.json')
+  ok(`wrote project-scoped settings: ${settingsPath}`)
 }
 
 function installService() {
@@ -191,6 +192,21 @@ async function main() {
   const bundle = JSON.parse(readFileSync(BUNDLE_PATH, 'utf-8'))
   const ctx = buildContext(bundle)
 
+  // Upfront summary so user (and Claude in plan mode) sees every change before any of them happen.
+  console.log(`${ACCENT}This bootstrap will make these changes:${RESET}`)
+  console.log(`  ${DIM}1.${RESET} Write personalised files to ${INSTALL_PATH}/ (CLAUDE.md, AGENTS.md, .env, .mcp.json, vault/)`)
+  console.log(`  ${DIM}2.${RESET} chmod 600 on ${INSTALL_PATH}/.env so only you can read it`)
+  console.log(`  ${DIM}3.${RESET} Symlink ${readdirSync(join(TEMPLATE_DIR, 'skills')).length} bundled skills into ${SKILLS_DIR} (existing skills with same names get .bak'd)`)
+  console.log(`  ${DIM}4.${RESET} Write project-scoped settings to ${SETTINGS_PATH}`)
+  console.log(`     ${DIM}(this enables bypassPermissions ONLY when working in this folder, NOT globally)${RESET}`)
+  if (bundle.installLaunchAgent) {
+    console.log(`  ${DIM}5.${RESET} Register auto-start service "${LAUNCHAGENT_LABEL}" via launchctl/schtasks/systemd`)
+  }
+  if (bundle.enableMorningBrief) {
+    console.log(`  ${DIM}6.${RESET} Seed daily morning-brief task in store/clawd.db`)
+  }
+  console.log(`  ${DIM}*.${RESET} Bundle file at ${BUNDLE_PATH} is NOT deleted automatically - you delete it after\n`)
+
   info('Writing personalised files')
   renderTemplate(join(TEMPLATE_DIR, 'CLAUDE.md.hbs'), join(INSTALL_PATH, 'CLAUDE.md'), ctx)
   renderTemplate(join(TEMPLATE_DIR, 'AGENTS.md.hbs'), join(INSTALL_PATH, 'AGENTS.md'), ctx)
@@ -238,12 +254,12 @@ async function main() {
     })
   } catch {}
 
-  // Clean up the downloaded bundle (contains plaintext keys). Skip if user opted out.
-  if (!KEEP_BUNDLE) {
-    try { unlinkSync(BUNDLE_PATH); ok('bundle.json removed (keys scrubbed)') } catch {}
-  }
-
+  // Bundle still has plaintext keys. Tell the user, don't auto-delete.
+  // Auto-delete looks like covering tracks; explicit deletion is safer + clearer.
   console.log(`\n${ACCENT}Done.${RESET}\n`)
+  console.log(`Your keys are now in ${INSTALL_PATH}/.env (chmod 600).`)
+  console.log(`The original bundle still has plaintext copies. ${ACCENT}Delete it now:${RESET}`)
+  console.log(`  ${DIM}rm "${BUNDLE_PATH}"${RESET}\n`)
   console.log(`Next:`)
   console.log(`  cd ${INSTALL_PATH}`)
   console.log(`  claude                       ${DIM}# open Claude Code here${RESET}`)

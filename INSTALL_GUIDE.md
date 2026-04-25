@@ -1,110 +1,106 @@
-# nello-claw INSTALL GUIDE
+# nello-claw - Install Reference
 
-You are Claude Code executing a fresh install of nello-claw on the user's machine.
+Reference documentation for what the install actually does. Not a command file.
 
-**Input:** the user's `bundle.json` (downloaded from the wizard at labs.nello.gg) is at `~/Downloads/nello-claw-bundle.json`.
+If you got here from the wizard at labs.nello.gg, the prompt you pasted into Claude Code already contains the actual install steps. This document is here so you (and your assistant) can verify what is about to happen before approving it in Plan Mode.
 
-**Output:** a complete nello-claw install at `~/nello-claw/` with bot + dashboard + LaunchAgent + skill pack wired and running.
+> **Use Claude Code's Plan Mode** (Shift+Tab twice) when you paste the install prompt. Your assistant writes out the steps it intends to take. You read them. You approve, or you don't.
 
-Execute these steps in order. After each step, report the result in one line. If a step fails, stop and ask the user what to do.
+## What gets installed
 
-## 0. Verify prerequisites
+Running the install creates one folder on your computer at `~/nello-claw/` containing:
 
-```bash
-node --version    # must be >= 20
-git --version     # any recent version
-which pnpm || npm install -g pnpm
+- `CLAUDE.md` - your assistant's persona, generated from your wizard answers
+- `.env` - your API keys (Telegram, Google, optional ones), permissions set so only you can read it
+- `vault/` - your notes folder, structured per the system you picked (NELLO/PARA/Zettelkasten/Custom)
+- `store/clawd.db` - SQLite database for memory, scheduled tasks, sessions
+- `node_modules/`, `dist/` - dependencies and compiled code
+- `.claude/settings.json` - **project-scoped** Claude Code settings (see "Security" below)
+- 7 abilities (skills) get symlinked into `~/.claude/skills/` so Claude Code can discover them when working in `~/nello-claw/`
+
+If you opted in:
+- A LaunchAgent (Mac) or Task Scheduler entry (Windows) or systemd user service (Linux) so the daemon starts on login
+- A `nello-claw.app` (Mac) or Start Menu shortcut (Windows) that opens the dashboard at `localhost:3000` in app-mode
+
+## What the bootstrap script does
+
+[`template/bootstrap.js`](template/bootstrap.js) is the script that does the work. It:
+
+1. Reads your `~/Downloads/nello-claw-bundle.json` (your wizard answers + API keys)
+2. Renders Handlebars templates with your values to write `CLAUDE.md`, `AGENTS.md`, `.mcp.json`, `.env`
+3. Sets `chmod 600` on `.env` so other users on your machine cannot read it
+4. Seeds your notes folder from the preset you picked
+5. Symlinks the 7 default abilities (skills) into `~/.claude/skills/`. If a skill with the same name already exists there, the existing one is renamed to `.bak-<timestamp>` first
+6. Writes a project-scoped `.claude/settings.json` inside `~/nello-claw/` with hooks + `bypassPermissions: true` for THAT project only
+7. Creates `store/`, `workspace/uploads/`, `memory/` directories
+8. If you opted into auto-start: registers the service via `launchctl` (Mac) / `schtasks` (Windows) / `systemctl --user` (Linux)
+9. If you opted into morning brief: seeds a scheduled task in the SQLite DB
+10. Runs `nello-claw audit` to verify everything
+
+You can read the full script at the path above before running.
+
+## Security
+
+Three things to know:
+
+**1. `bypassPermissions` is project-scoped, not global.**
+
+The setting goes in `~/nello-claw/.claude/settings.json`, not `~/.claude/settings.json`. It only applies when Claude Code is working inside the `~/nello-claw/` folder (which is where your assistant lives). Your other projects keep their normal Claude Code permission prompts.
+
+You can verify after install:
+```
+cat ~/nello-claw/.claude/settings.json
+cat ~/.claude/settings.json   # should be unchanged
 ```
 
-If node is missing or < 20, tell the user to install Node 20+ and stop.
+**2. Your API keys live on your computer in plaintext, in `~/nello-claw/.env`.**
 
-## 1. Locate the bundle
+This is the same trade-off every local AI tool makes (Ollama, LM Studio, etc). The file has `chmod 600` so only your user account can read it. Nobody at NELLO Labs sees your keys - the wizard at labs.nello.gg never receives them, the install bundle is downloaded directly to your machine.
 
+After install: delete `~/Downloads/nello-claw-bundle.json` yourself. The installer leaves it in place so you can verify it. The keys in there are duplicates of what got written to `~/nello-claw/.env`.
+
+**3. The skill symlinks point at files inside `~/nello-claw/template/skills/`.**
+
+Those are open-source SKILL.md files in the public repo at github.com/Matthew-Lee-Nello/nello-claw. Read them before approving the install if you want to know what abilities your assistant gets:
+- [skills/karpathy-guidelines](template/skills/karpathy-guidelines/) - clean code reasoning
+- [skills/find-skills](template/skills/find-skills/) - discover more abilities
+- [skills/research](template/skills/research/) - parallel web research
+- [skills/checkpoint](template/skills/checkpoint/) - save session before clearing
+- [skills/think](template/skills/think/) - structured problem breakdown
+- [skills/self-improving](template/skills/self-improving/) - agent reflects on mistakes
+- [skills/vault-audit](template/skills/vault-audit/) - vault hygiene checker
+
+## What it does NOT do
+
+- It does not modify `~/.claude/settings.json` (your global Claude Code settings)
+- It does not upload anything to NELLO Labs servers
+- It does not phone home, send telemetry, or report usage
+- It does not modify any file outside `~/nello-claw/`, `~/.claude/skills/<symlinks>`, `~/Library/LaunchAgents/com.nello-claw.server.plist` (Mac), or the equivalents on Windows/Linux
+
+## Roll back
+
+To completely remove:
 ```bash
-BUNDLE=~/Downloads/nello-claw-bundle.json
-[ -f "$BUNDLE" ] || { echo "bundle not found - complete the wizard at labs.nello.gg first"; exit 1; }
+# Mac
+launchctl bootout gui/$(id -u)/com.nello-claw.server
+rm -rf ~/nello-claw
+rm -f ~/Library/LaunchAgents/com.nello-claw.server.plist
+# Skill symlinks (only the ones that point at nello-claw)
+find ~/.claude/skills -maxdepth 1 -type l -lname '*nello-claw*' -delete
 ```
 
-## 2. Clone the template repo
-
-```bash
-if [ -d ~/nello-claw/.git ]; then
-  git -C ~/nello-claw pull --quiet
-else
-  git clone --depth 1 https://github.com/Matthew-Lee-Nello/nello-claw.git ~/nello-claw
-fi
+```powershell
+# Windows
+schtasks /Delete /F /TN "com.nello-claw.server"
+Remove-Item -Recurse -Force "$HOME\nello-claw"
+Remove-Item "$HOME\Desktop\nello-claw.lnk", "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\nello-claw.lnk"
 ```
 
-## 3. Install dependencies and build
+## How to verify before installing
 
-```bash
-cd ~/nello-claw
-pnpm install --silent
-pnpm -r build
-```
+1. Read [`template/bootstrap.js`](template/bootstrap.js) - that is the install script
+2. Read [`template/hooks/settings.json.hbs`](template/hooks/settings.json.hbs) - what gets written to project settings
+3. Read [`template/CLAUDE.md.hbs`](template/CLAUDE.md.hbs) - what gets written as your assistant's persona
+4. Use Plan Mode in Claude Code (Shift+Tab twice) - your assistant will summarise everything before running
 
-Report: "built N packages". If build fails, paste the exact error to the user and stop.
-
-## 4. Copy the bundle into place
-
-```bash
-cp ~/Downloads/nello-claw-bundle.json ~/nello-claw/bundle.json
-```
-
-## 5. Run the bootstrap
-
-```bash
-cd ~/nello-claw
-NC_INSTALL_PATH=~/nello-claw node template/bootstrap.js
-```
-
-This renders all templates, seeds the Obsidian vault preset the user picked, writes `.env` (chmod 600), wires `.mcp.json`, symlinks the skill pack into `~/.claude/skills/`, merges `~/.claude/settings.json` with hooks + bypassPermissions + Karpathy plugin, installs the LaunchAgent, seeds the morning brief scheduled task, and runs `nello-claw audit`.
-
-Bundle file gets deleted after success (contains plaintext keys).
-
-## 6. Confirm the daemon is up
-
-```bash
-launchctl list | grep nello-claw.server   # should show a PID
-curl -s http://localhost:3000/api/monitoring/health
-```
-
-If dashboard is not responding, wait 5 seconds and retry (LaunchAgent throttle).
-
-## 7. Wire the Telegram chat ID
-
-The user's `ALLOWED_CHAT_ID` is empty until they message their bot. Tell them:
-
-> "Open Telegram, message your bot, send `/chatid`. It will reply with your chat ID. Paste it here and I'll add it to your `.env`."
-
-After they paste:
-```bash
-echo "ALLOWED_CHAT_ID=<CHAT_ID>" >> ~/nello-claw/.env
-launchctl kickstart -k gui/$(id -u)/com.nello-claw.server
-```
-
-## 8. Final report
-
-Give the user:
-- path: `~/nello-claw/`
-- dashboard: http://localhost:3000
-- audit command: `cd ~/nello-claw && pnpm audit`
-- restart: `launchctl kickstart -k gui/$(id -u)/com.nello-claw.server`
-- logs: `tail -f ~/nello-claw/store/server.log`
-
-Tell them to open the dashboard, send a test message, and try their first Telegram message too.
-
-## Failure modes and recovery
-
-- **pnpm install fails**: likely node version or network. Report exact error.
-- **LaunchAgent load fails**: missing `launchctl` permissions. Tell user to re-run step 5 manually.
-- **Google OAuth consent needed**: first time the `google_workspace` MCP runs, it opens a browser. User confirms access. Token caches.
-- **Existing ~/.claude/settings.json**: bootstrap merges, backs up old to `.bak-<timestamp>`. Tell the user the backup location.
-- **Port 3000 already in use**: `lsof -i :3000` to find what's using it. Offer to change `DASHBOARD_PORT` in `.env`.
-
-## Style
-
-- Report each step in one sentence. No narration of what you're about to do.
-- If the user asks mid-install, answer and resume.
-- Use the user's language per their bundle (`bundle.language` field).
-- Match the voice rules in `~/nello-claw/CLAUDE.md` once it exists.
+If anything looks wrong, do not approve the plan. Open an issue at github.com/Matthew-Lee-Nello/nello-claw/issues.

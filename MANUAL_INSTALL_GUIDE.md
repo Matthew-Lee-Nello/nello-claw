@@ -1,109 +1,35 @@
-# nello-claw MANUAL INSTALL GUIDE
+# nello-claw - Manual Install Reference
 
-You are Claude Code doing a fresh install for a user who skipped the labs.nello.gg wizard. You collect their answers conversationally, then do what the wizard would have done: compile a bundle locally, call the bootstrap.
+Reference for installing without using the labs.nello.gg wizard. Not a command file.
 
-## 0. Prerequisites
+If you skip the wizard, you fill out the same answers conversationally inside Claude Code. The end result is the same `~/nello-claw/` folder.
 
-```bash
-node --version    # >= 20
-git --version
-which pnpm || npm install -g pnpm
-```
+> **Use Claude Code's Plan Mode** (Shift+Tab twice) when you paste the manual install prompt. Your assistant writes out the steps it intends to take. You read them. You approve, or you don't.
 
-## 1. Conversational wizard
+## How it differs from the wizard install
 
-Ask the following. One at a time. Keep responses tight.
+The wizard collects your answers in a browser then writes them to a JSON file at `~/Downloads/nello-claw-bundle.json`. The manual flow asks you the same questions in chat instead.
 
-### Identity
-- Your name?
-- Assistant name? (default: "Claude")
-- Timezone? (default: auto-detect)
-- Language: AU English / US / UK / other?
-- Communication style: blunt / warm / formal / casual?
-- Values / non-negotiables (up to 3, comma separated, optional)?
+Same install, same security model, same `~/nello-claw/` output. See [INSTALL_GUIDE.md](INSTALL_GUIDE.md) for what gets installed and what does not.
 
-### Work
-- Role or title?
-- Company or "solo"?
-- Industry?
-- Main projects (up to 5, name + one-line each, optional)?
-- Tools you use (comma separated)?
+## Questions you will be asked
 
-### People (all optional)
-- Team members? (name, role)
-- Clients? (name, status)
-- Mentors? (name, relationship)
+Identity — your name, what you call your assistant, timezone, language preference.
 
-### Vault
-- NELLO / PARA / Zettelkasten / Custom preset?
-- Existing vault path or new scaffold at `~/nello-claw/vault/`?
+Work — your role, business, projects you are working on, day-to-day apps.
 
-### Voice
-- Em-dash policy: never / sparingly / free?
-- Banned words (optional)?
+People — team, clients, mentors (all optional).
 
-### Keys
-- Telegram bot token (create via @BotFather)?
-- Groq API key (voice STT, optional)?
-- ElevenLabs key + voice ID (voice TTS, optional)?
-- Google OAuth client ID + secret + your Google email (for Gmail/Drive/Docs/Sheets/Calendar, optional)?
+Notes — pick a structure (NELLO / PARA / Zettelkasten / Custom) and where to put the folder.
 
-### Automation
-- Install Telegram bot daemon? (default yes)
-- Install web dashboard? (default yes)
-- Install LaunchAgent auto-start? (default yes on macOS)
-- Morning brief at 09:00 local? (default yes)
-- Voice source: online (Groq + ElevenLabs) / local (mlx-whisper + Piper) / off?
+How they sound — em dash policy, banned words, voice rules.
 
-## 2. Compile the bundle
+Connections — paste API keys for the services you want (Telegram, Groq for voice, Google Workspace, optional research keys).
 
-Write the answers to `~/nello-claw-bundle.json` using this schema (fields from `web/lib/types.ts`):
+Last bits — auto-start on login, daily morning brief, etc.
 
-```json
-{
-  "name": "...",
-  "assistantName": "...",
-  "timezone": "...",
-  "language": "...",
-  "communicationStyle": "...",
-  "values": [...],
-  "role": "...",
-  "company": "...",
-  "projects": [...],
-  "teamMembers": [...],
-  "clients": [...],
-  "mentors": [...],
-  "vaultPreset": "...",
-  "vaultPath": "...",
-  "graphifyEnabled": true,
-  "emDashPolicy": "...",
-  "oxfordComma": false,
-  "bannedWords": [...],
-  "enableHumanizer": true,
-  "enableKarpathyGuidelines": true,
-  "enableAiHumanizer": true,
-  "keys": { "TELEGRAM_BOT_TOKEN": "...", ... },
-  "mcps": { "google": true, ... },
-  "installTelegram": true,
-  "installDashboard": true,
-  "installLaunchAgent": true,
-  "enableMorningBrief": true,
-  "morningBriefPrompt": "...",
-  "morningBriefCron": "0 9 * * *",
-  "voiceSource": "online",
-  "skillPack": ["karpathy-guidelines", "find-skills", "find-mcp", "research", "checkpoint", "think", "self-improving", "simplify", "vault-audit", "update-config", "fewer-permission-prompts"],
-  "optionalSkills": []
-}
-```
+After answering, your assistant writes a bundle file locally + runs the same `template/bootstrap.js` documented in INSTALL_GUIDE.md.
 
-## 3. Run the install
+## Security
 
-Follow the same steps as `INSTALL_GUIDE.md` from step 2 onwards, but use `~/nello-claw-bundle.json` instead of `~/Downloads/nello-claw-bundle.json`.
-
-## Rules
-
-- Ask one question at a time.
-- Show the user the bundle before writing it. Let them edit.
-- Do not skip steps silently.
-- Match the `language` value they picked.
-- Do not generate a bundle field the user did not answer. Use defaults from `web/lib/defaults.ts`.
+Same as INSTALL_GUIDE.md. Read that before approving anything.

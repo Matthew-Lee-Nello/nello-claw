@@ -3,7 +3,19 @@
 import { useState } from 'react'
 import { useWizard } from '@/lib/store'
 
-const PASTE_PROMPT = `Install nello-claw. My bundle is at ~/Downloads/nello-claw-bundle.json. Read https://raw.githubusercontent.com/Matthew-Lee-Nello/nello-claw/main/INSTALL_GUIDE.md and follow every step. Adapt commands for my OS (Mac, Windows or Linux). Ask me before anything destructive.`
+const PASTE_PROMPT = `Please install nello-claw for me.
+
+The reference docs are at https://github.com/Matthew-Lee-Nello/nello-claw - read INSTALL_GUIDE.md and SECURITY.md so you know what the install does and does not do.
+
+The actual install steps are:
+1. git clone https://github.com/Matthew-Lee-Nello/nello-claw.git ~/nello-claw (or the equivalent on Windows)
+2. cd ~/nello-claw && pnpm install && pnpm -r --filter '!@nc/web' build
+3. cp ~/Downloads/nello-claw-bundle.json ~/nello-claw/bundle.json
+4. node ~/nello-claw/template/bootstrap.js
+
+Before running the bootstrap, summarise everything it will change on my system and let me approve. The bootstrap prints its own change summary too.
+
+Adapt the commands for my OS (Mac/Windows/Linux). Ask me before any destructive operation.`
 
 const MAC_FALLBACK = 'curl -fsSL https://labs.nello.gg/i/mac | bash'
 const WIN_FALLBACK = 'irm https://labs.nello.gg/i/win | iex'
