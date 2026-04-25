@@ -9,8 +9,8 @@ date: {{today}}
 Index of people in your world.
 
 {{#each teamMembers}}
-- [[Person-{{slug}}]] - team ({{role}})
+- [[Person-{{this.slug}}]] - team ({{role}})
 {{/each}}
 {{#each mentors}}
-- [[Person-{{slug}}]] - {{relationship}}
+- [[Person-{{this.slug}}]] - {{relationship}}
 {{/each}}

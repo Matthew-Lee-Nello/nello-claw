@@ -467,10 +467,286 @@ export const COURSE: Module[] = [
   {
     id: 'm9',
     number: 9,
+    title: 'The Brain Method',
+    lessons: [
+      {
+        id: 'm9-l1', number: 1, title: 'Brain before agents', duration: '4 min',
+        body: [
+          { type: 'p', text: "Most people try to automate sales, marketing, or admin BEFORE their assistant knows anything about them. They get generic AI output that sounds nothing like them and misses every nuance of their business." },
+          { type: 'p', text: "The Brain Method flips it. Build the brain first - everything your assistant needs to know about you, your work, your people, your voice. Then the agents on top actually behave like extensions of you, not random AI." },
+
+          { type: 'h', text: "The mistake" },
+          { type: 'p', text: "Person buys a course on AI agents. Sets up an outbound sales agent. The agent sends emails that sound like every other AI-written email on the internet. Open rates are zero. They blame the tool." },
+          { type: 'p', text: "The tool was fine. The brain was empty. The agent had nothing to draw on - no voice, no understanding of who they were targeting, no context for why their offer matters. Garbage in, garbage out." },
+
+          { type: 'h', text: "The fix" },
+          { type: 'p', text: "Spend the first week feeding your assistant context. Then turn it loose on tasks. The output goes from generic to surgical because the brain finally has something to work with." },
+
+          { type: 'callout', tone: 'tip', title: "Rule of thumb", text: "If your assistant produces output that could have come from any random AI, your brain layer is too thin. Add more about you, your work, and your people before automating anything." },
+        ],
+      },
+      {
+        id: 'm9-l2', number: 2, title: "The 5 layers of your brain", duration: '5 min',
+        body: [
+          { type: 'p', text: "Your assistant's brain has 5 layers. You filled in most of them during the wizard. The deeper each layer goes, the better the output." },
+
+          { type: 'h', text: "Layer 1: Identity" },
+          { type: 'p', text: "Who you are. Your name, role, values, how you communicate, the language you write in. This is the lens everything else gets filtered through." },
+          { type: 'p', text: "Wizard collected: name, assistant name, communication style, language, values." },
+          { type: 'p', text: "Deepen by saying things like:" },
+          { type: 'ul', items: [
+            "I'm 17, based in Brisbane, Christian, building a self-sustaining AI education business",
+            "I value discipline over motivation, honesty over comfort, faith over fear",
+            "I never use words like 'leverage', 'crucial', 'tapestry'",
+          ]},
+
+          { type: 'h', text: "Layer 2: Work" },
+          { type: 'p', text: "What you do. Your projects, customers, services, day-to-day apps." },
+          { type: 'p', text: "Wizard collected: role, company, industry, projects, target customer, tools." },
+          { type: 'p', text: "Deepen by telling it about:" },
+          { type: 'ul', items: [
+            "What success looks like in your business this quarter",
+            "Your typical sales cycle, deal size, conversion rates",
+            "Your stack: which apps actually matter, which are noise",
+            "Open loops: what's hanging over you that you keep meaning to close",
+          ]},
+
+          { type: 'h', text: "Layer 3: People" },
+          { type: 'p', text: "Everyone in your world. Team, clients, mentors, network." },
+          { type: 'p', text: "Wizard collected: team, clients, mentors." },
+          { type: 'p', text: "Deepen by saying:" },
+          { type: 'ul', items: [
+            "When new clients come in: 'remember I just signed [name] as a client, [status], working on [project]'",
+            "When relationships shift: '[name] is now CTO, was VP eng before'",
+            "When you meet someone new: 'just had a call with [name] from [company], they want [thing]'",
+          ]},
+          { type: 'p', text: "Each Person- note in your vault becomes context your assistant pulls automatically when their name comes up." },
+
+          { type: 'h', text: "Layer 4: Knowledge" },
+          { type: 'p', text: "Your reference material. Frameworks you follow, books you've read, decisions you've made, lessons from past projects." },
+          { type: 'p', text: "Wizard collected: nothing yet (this layer is built over time)." },
+          { type: 'p', text: "Deepen by:" },
+          { type: 'ul', items: [
+            "Importing past emails, briefs, SOPs as Resource- notes",
+            "Saying 'remember this lesson: [thing] - [context]' after wins or failures",
+            "Using the /research skill to build up reference material on topics you care about",
+          ]},
+
+          { type: 'h', text: "Layer 5: Voice" },
+          { type: 'p', text: "How you write. Em-dashes, Oxford comma, banned words, signature phrases." },
+          { type: 'p', text: "Wizard collected: em-dash policy, Oxford comma, banned words." },
+          { type: 'p', text: "Deepen by feeding it samples of your actual writing. Past emails, blog posts, journal entries. Your assistant picks up your rhythm and matches it." },
+
+          { type: 'callout', tone: 'tip', title: "Order of operations", text: "Layers 1, 2, 3, 5 get built fast (a week). Layer 4 builds over months. The depth of layer 4 is what separates a good assistant from a great one." },
+        ],
+      },
+      {
+        id: 'm9-l3', number: 3, title: 'How your brain compounds', duration: '3 min',
+        body: [
+          { type: 'p', text: "Every interaction you have with your assistant feeds back into the brain. Three places this happens:" },
+
+          { type: 'h', text: "1. Auto-memory" },
+          { type: 'p', text: "When you say 'remember', 'my X is Y', 'I prefer', or correct it on something — the assistant writes a small markdown file to your auto-memory folder. Future sessions see those memories at startup." },
+          { type: 'p', text: "Lives at: ~/.claude/projects/<your-project>/memory/" },
+
+          { type: 'h', text: "2. Vault notes" },
+          { type: 'p', text: "Anything you tell your assistant about a person, project, or client can be written as a Person- / Project- / Client- note in your vault. These are your assistant's long-term reference." },
+          { type: 'p', text: "When you next say 'what's the status with Acme' your assistant reads Client-Acme.md silently and answers with full context." },
+
+          { type: 'h', text: "3. Scheduled refinement" },
+          { type: 'p', text: "Set a weekly task: 'every Sunday, review what we worked on this week and update the Person notes for anyone new who came up'. Your assistant maintains its own brain on autopilot." },
+
+          { type: 'callout', tone: 'tip', title: "The compounding effect", text: "After 90 days of use, your assistant knows things about your business that you forgot you told it. It surfaces context you would have missed. Every output gets sharper because the brain got deeper." },
+
+          { type: 'callout', tone: 'info', title: "What stays out of memory", text: "Sensitive stuff. Passwords, financial details, conversations you do not want logged. Your assistant follows the rules in your CLAUDE.md - tell it 'never write to memory: passwords, banking, private DMs' and it respects that boundary." },
+        ],
+      },
+    ],
+  },
+
+  {
+    id: 'm10',
+    number: 10,
+    title: 'Your first real workflows',
+    lessons: [
+      {
+        id: 'm10-l1', number: 1, title: 'Overnight email brief', duration: '5 min',
+        body: [
+          { type: 'p', text: "Wake up to a Telegram message that summarises your overnight emails: what's important, what needs a reply today, what's noise." },
+
+          { type: 'h', text: "What it does" },
+          { type: 'p', text: "Every morning at 6:30am, your assistant reads everything that hit your inbox since 5pm yesterday. It groups by importance, drafts replies for the urgent ones, and texts you a 5-line summary on Telegram." },
+
+          { type: 'h', text: "How to set it up" },
+          { type: 'p', text: "One conversation with your assistant. Paste this prompt:" },
+          { type: 'code', text: `Build me a daily overnight email brief workflow.
+
+Trigger: every weekday at 6:30am local time.
+
+Steps:
+1. Read all Gmail messages received since 5pm yesterday using the Google Workspace MCP
+2. Group into: urgent (needs reply today), worth knowing (FYI), noise (skip)
+3. For each urgent one, draft a reply in my voice using the operator-humanizer skill
+4. Send me a Telegram message with the summary - max 5 lines for "worth knowing", and the urgent ones with their drafted replies inline so I can copy + send from my phone
+
+Save this as a scheduled task. Test it now by pretending it is 6:30am.` },
+
+          { type: 'h', text: "How to verify" },
+          { type: 'p', text: "After it runs the test:" },
+          { type: 'ol', items: [
+            'Check your Telegram - should have the morning brief',
+            'Reply "looks good" or correct anything (e.g. "the urgent threshold is too low, only flag stuff from clients")',
+            "Your assistant updates the workflow + saves the correction to memory",
+            'Tomorrow morning, you wake up to a tighter version',
+          ]},
+
+          { type: 'callout', tone: 'tip', title: "First-week win", text: "This single workflow saves most people 30-45 minutes every morning. They stop checking email reactively. They open it once, with a clear list of what matters." },
+        ],
+      },
+      {
+        id: 'm10-l2', number: 2, title: 'Calendar morning prep', duration: '4 min',
+        body: [
+          { type: 'p', text: "Before each meeting today, get a one-line brief: who you're meeting, what they want, what you said last time, what to push for." },
+
+          { type: 'h', text: "What it does" },
+          { type: 'p', text: "30 minutes before every meeting on your calendar, your assistant texts you a quick prep:" },
+          { type: 'ul', items: [
+            "Who: name + role + company",
+            "Last interaction: when, what you discussed",
+            "Their goal in this meeting: what they probably want",
+            "Your goal: what you should push for",
+            "Open loops: anything you owe them or vice versa",
+          ]},
+
+          { type: 'h', text: "How to set it up" },
+          { type: 'code', text: `Build me a meeting prep workflow.
+
+Trigger: 30 minutes before every meeting on my Google Calendar today (poll calendar every 15 minutes).
+
+For each upcoming meeting:
+1. Get the attendees from the calendar event
+2. For each attendee, look up their Person- note in my vault
+3. If they are a Client, also read Client-<name>.md
+4. Search my Gmail for the last 5 emails with that person
+5. Build a 5-line brief: who, last touchpoint, their goal, my goal, open loops
+6. Send to me on Telegram 30 min before the meeting starts
+
+Save as a recurring background task. Run hourly to scan for upcoming meetings.` },
+
+          { type: 'h', text: "Watch what it does" },
+          { type: 'p', text: "First time it fires before a real meeting, you'll get a prep card that took your assistant 30 seconds and would have taken you 10 minutes of digging. Then you walk in sharper than the other side." },
+
+          { type: 'callout', tone: 'info', title: "If you want it before EVERY meeting (not 30 min)", text: "Tell the assistant: 'send the prep at 7am for the whole day, then again 30 min before each meeting'. Your call. The workflow is yours to shape." },
+        ],
+      },
+      {
+        id: 'm10-l3', number: 3, title: 'Voice-note todo capture', duration: '3 min',
+        body: [
+          { type: 'p', text: "On a walk, in the car, in the shower. Voice-note your assistant. Comes back as a clean todo on your Inbox, tagged + categorised." },
+
+          { type: 'h', text: "What it does" },
+          { type: 'p', text: "You send a 30-second voice note to your bot on Telegram. Your assistant transcribes it, figures out what each fragment is (todo / idea / decision / question), and writes it to the right place in your vault." },
+
+          { type: 'h', text: "How to set it up" },
+          { type: 'p', text: "Already configured if you ticked Groq voice in the wizard. The default behaviour transcribes voice notes to text. Now upgrade it:" },
+          { type: 'code', text: `Update my voice-note workflow.
+
+When I send a voice note on Telegram:
+1. Transcribe via Groq (already wired)
+2. Parse the transcript - it might contain multiple thoughts, mixed types (todos, ideas, questions, decisions)
+3. For each thought, classify: todo / idea / decision / question / log
+4. Write each to the right place:
+   - todos → append to vault Inbox.md with #todo tag
+   - ideas → vault Idea-<slug>.md
+   - decisions → today's vault Journal under "Decisions" section
+   - questions → today's Journal under "Questions for me" section
+   - log → today's Journal under "Logs"
+5. Reply on Telegram with a one-line summary: "Captured 3 todos + 1 idea. See your Inbox + Idea-pricing-rethink."
+
+Save the workflow.` },
+
+          { type: 'h', text: "Use it" },
+          { type: 'p', text: "Open Telegram. Hit the mic. Talk for 20 seconds about whatever's on your mind. 5 seconds later your vault is updated and your phone shows a one-line confirmation." },
+
+          { type: 'callout', tone: 'tip', title: "Why this beats note apps", text: "Note apps capture text into a flat list. Your assistant captures voice into the right structure - the todo goes in your todo list, the idea gets a stub, the decision gets timestamped. No second pass needed." },
+        ],
+      },
+      {
+        id: 'm10-l4', number: 4, title: 'Person + client memory', duration: '4 min',
+        body: [
+          { type: 'p', text: "Tell your assistant about someone once. Forever after, every email or meeting with them surfaces the right context automatically." },
+
+          { type: 'h', text: "What it does" },
+          { type: 'p', text: "When you mention a person to your assistant, it does three things:" },
+          { type: 'ol', items: [
+            "Checks your vault for an existing Person- note",
+            "If none, creates Person-<Name>.md with context you provided",
+            "If exists, appends new info under a timestamped section",
+          ]},
+          { type: 'p', text: "Then any future task that involves that person automatically pulls their note." },
+
+          { type: 'h', text: "How to set it up" },
+          { type: 'code', text: `Build me a person-memory workflow.
+
+When I tell you about someone (name + context):
+1. Search my vault for existing Person-<Name>.md
+2. If exists, append the new info under a "## YYYY-MM-DD update" heading
+3. If not, create the note with frontmatter (type: person, tags, date) + sections for Context / Recent interactions / Open loops / Notes
+4. If the person is a client (paying me money), also create or update Client-<Name>.md
+5. Confirm in chat: "Updated Person-John-Smith with the new info"
+
+When I ask about someone (e.g. "what's the status with John"):
+1. Read Person-<Name>.md silently
+2. Use that context to answer
+3. Don't tell me you read it unless I ask` },
+
+          { type: 'h', text: "Use it" },
+          { type: 'p', text: "Just talk normally. \"Had a call with Jane Doe from Acme. They want help with their pipeline. Budget around $5k. Decision by Friday.\" Your assistant writes Person-Jane-Doe.md in the background. A week later when Acme replies to an email, your assistant already has context." },
+
+          { type: 'callout', tone: 'tip', title: "Compounds fast", text: "After a month of this, your vault has 30-50 Person- notes. Your assistant knows your network. Drop someone's name and you get full context in under a second." },
+        ],
+      },
+      {
+        id: 'm10-l5', number: 5, title: 'Compounding workflows', duration: '4 min',
+        body: [
+          { type: 'p', text: "Workflows by themselves are useful. Workflows that talk to each other are exponential." },
+
+          { type: 'h', text: "Example chain" },
+          { type: 'p', text: "Morning email brief (lesson 1) sees an urgent reply from a client → triggers calendar prep workflow (lesson 2) for your meeting with them → which reads Client-<Name>.md (built up by person-memory workflow, lesson 4) → drafts a reply that pulls in your last 3 decisions about that account." },
+          { type: 'p', text: "You wake up to: 'Acme replied. Meeting at 10am. Reply drafted. Last time you discussed [X], you committed to [Y]. Send the reply?'" },
+
+          { type: 'h', text: "How to chain workflows" },
+          { type: 'p', text: "Tell your assistant explicitly:" },
+          { type: 'code', text: `When the morning email brief flags an urgent reply from someone in my calendar today:
+1. Run the meeting prep for that specific meeting earlier than 30 min
+2. Include their last reply in the prep
+3. Pre-draft my response based on Client-<name>.md and what we discussed last time
+4. Push it all to Telegram in one combined message` },
+
+          { type: 'h', text: "What to build next" },
+          { type: 'p', text: "Once you have these 4 workflows running, common next ones:" },
+          { type: 'ul', items: [
+            "Weekly review: every Sunday, write up what got done + what's outstanding into a single doc",
+            "Client invoicing: when a project is marked done, draft the Xero invoice + send to client for approval",
+            "Content idea capture: anything tagged #content in your Inbox gets developed into a draft post by Friday",
+            "Relationship maintenance: every 30 days, surface contacts you have not spoken to + suggest a check-in message",
+          ]},
+
+          { type: 'callout', tone: 'tip', title: "The compound effect", text: "Each new workflow makes every existing workflow better. After 5 workflows, your assistant feels like a chief of staff. After 15, it feels like a small team you can talk to from your phone." },
+
+          { type: 'callout', tone: 'info', title: "How to know when to stop adding", text: "When your assistant handles 80%+ of your daily admin without you thinking about it. Past that, you are over-engineering. Use the time saved to do work only you can do." },
+        ],
+      },
+    ],
+  },
+
+  {
+    id: 'm11',
+    number: 11,
     title: 'Tips & tricks',
     lessons: [
       {
-        id: 'm9-l1', number: 1, title: 'Forking conversations', duration: '3 min',
+        id: 'm11-l1', number: 1, title: 'Forking conversations', duration: '3 min',
         body: [
           { type: 'p', text: "One of the most underused features in Claude Code. Fork lets you branch your current chat at any point - all context up to that moment carries over, but new messages only go to the new branch. You end up with multiple parallel threads sharing the same setup." },
 

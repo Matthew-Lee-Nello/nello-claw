@@ -18,15 +18,24 @@ Running the install fills your chosen folder with:
 
 - `CLAUDE.md` - your assistant's persona, generated from your wizard answers
 - `.env` - your API keys (Telegram, Google, optional ones), permissions set so only you can read it
-- `vault/` - your notes folder, structured per the system you picked (NELLO/PARA/Zettelkasten/Custom)
-- `store/clawd.db` - SQLite database for memory, scheduled tasks, sessions
+- `vault/` - your Obsidian vault, structured per the system you picked (NELLO/PARA/Zettelkasten/Custom)
+  - `vault/Memory/` - your assistant auto-captures preferences/feedback/decisions here as Obsidian notes (the vault IS the permanent memory)
+  - `vault/Journal/` - one note per day, written by the daemon as you use it
+  - `vault/.obsidian/` - pre-configured dark theme + FFA600 accent + graph view tuned for your scale
+- `store/clawd.db` - SQLite database for short-term conversation context, scheduled tasks, sessions
 - `node_modules/`, `dist/` - dependencies and compiled code
 - `.claude/settings.json` - **project-scoped** Claude Code settings (see "Security" below)
 - 7 abilities (skills) get symlinked into `~/.claude/skills/` so Claude Code can discover them when working in `<install-folder>/`
 
+It also auto-installs (if missing):
+- **Obsidian.app** (Mac via Homebrew cask, Windows via winget) - so your vault opens in a real app, not just on disk
+- **obsidian-cli** (npm global) - lets your assistant write/search the vault from the command line
+
 If you opted in:
 - A LaunchAgent (Mac) or Task Scheduler entry (Windows) or systemd user service (Linux) so the daemon starts on login
 - A `nello-claw.app` (Mac) or Start Menu shortcut (Windows) that opens the dashboard at `localhost:3000` in app-mode
+
+When the install finishes the dashboard opens in app-mode AND your vault opens in Obsidian alongside it.
 
 ## What the bootstrap script does
 
@@ -38,7 +47,8 @@ If you opted in:
 4. Seeds your notes folder from the preset you picked
 5. Symlinks the 7 default abilities (skills) into `~/.claude/skills/`. If a skill with the same name already exists there, the existing one is renamed to `.bak-<timestamp>` first
 6. Writes a project-scoped `.claude/settings.json` inside `<install-folder>/` with hooks + `bypassPermissions: true` for THAT project only
-7. Creates `store/`, `workspace/uploads/`, `memory/` directories
+7. Creates `store/`, `workspace/uploads/`, `vault/Memory/`, `vault/Journal/` directories
+8. Installs `obsidian-cli` globally via npm so your assistant can drive Obsidian from the command line
 8. If you opted into auto-start: registers the service via `launchctl` (Mac) / `schtasks` (Windows) / `systemctl --user` (Linux)
 9. If you opted into morning brief: seeds a scheduled task in the SQLite DB
 10. Runs `nello-claw audit` to verify everything

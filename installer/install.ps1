@@ -73,6 +73,14 @@ if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) {
 }
 Ok "pnpm $(pnpm --version)"
 
+# 4b. Auto-install Obsidian (vault is the memory)
+$ObsidianExe = "$env:LOCALAPPDATA\Obsidian\Obsidian.exe"
+if (-not (Test-Path $ObsidianExe)) {
+  Say "installing Obsidian"
+  winget install --silent --accept-source-agreements --accept-package-agreements Obsidian.Obsidian 2>$null | Out-Null
+  if (-not (Test-Path $ObsidianExe)) { Warn "Obsidian install failed - get it from obsidian.md (vault still works as plain markdown)" }
+}
+
 if (-not (Get-Command claude -ErrorAction SilentlyContinue)) {
   Say "installing Claude Code CLI"
   npm install -g @anthropic-ai/claude-code 2>$null | Out-Null
@@ -186,6 +194,12 @@ if (-not $Healthy) {
 } else {
   Ok "dashboard is up at $DashboardUrl"
   Start-Process $DashboardUrl
+}
+
+# Open vault in Obsidian alongside the dashboard
+if ((Test-Path $ObsidianExe) -and (Test-Path (Join-Path $InstallPath "vault"))) {
+  $vaultUri = "obsidian://open?path=" + [uri]::EscapeDataString((Join-Path $InstallPath "vault"))
+  try { Start-Process $vaultUri } catch { Start-Process -FilePath $ObsidianExe }
 }
 
 Stop-Transcript | Out-Null

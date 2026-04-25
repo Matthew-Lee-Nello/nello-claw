@@ -10,7 +10,19 @@ import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { homedir } from 'node:os'
 
-const INSTALL = process.env.NC_INSTALL_PATH || join(homedir(), 'nello-claw')
+const INSTALL = process.env.NC_INSTALL_PATH || process.cwd()
+
+// Resolve vault path from .env, fall back to <install>/vault
+function resolveVault() {
+  const envPath = join(INSTALL, '.env')
+  if (existsSync(envPath)) {
+    const env = readFileSync(envPath, 'utf-8')
+    const match = env.match(/^VAULT_PATH=(.+)$/m)
+    if (match) return match[1].replace(/^["']|["']$/g, '').trim()
+  }
+  return join(INSTALL, 'vault')
+}
+const VAULT = resolveVault()
 
 function ymd(date) {
   const y = date.getFullYear()
@@ -34,15 +46,8 @@ function emitFile(label, path, head = 0) {
 }
 
 emitFile('Brain Context', join(INSTALL, 'brain-context.md'))
-emitFile('Knowledge Graph (auto-loaded)', join(INSTALL, 'graphify-out', 'GRAPH_REPORT.md'), 100)
-emitFile(`Journal - ${today}`, join(INSTALL, 'memory', `${today}.md`))
-emitFile(`Journal - ${yesterday}`, join(INSTALL, 'memory', `${yesterday}.md`))
-
-// Inbox if vault wired
-const envPath = join(INSTALL, '.env')
-if (existsSync(envPath)) {
-  const env = readFileSync(envPath, 'utf-8')
-  const match = env.match(/^VAULT_PATH=(.+)$/m)
-  const vaultPath = match ? match[1].replace(/^["']|["']$/g, '') : null
-  if (vaultPath) emitFile('Inbox', join(vaultPath, 'Inbox.md'))
-}
+emitFile('Knowledge Graph (auto-loaded)', join(VAULT, 'graphify-out', 'GRAPH_REPORT.md'), 100)
+emitFile('Memory Index', join(VAULT, 'Memory', 'MEMORY.md'))
+emitFile(`Journal - ${today}`, join(VAULT, 'Journal', `${today}.md`))
+emitFile(`Journal - ${yesterday}`, join(VAULT, 'Journal', `${yesterday}.md`))
+emitFile('Inbox', join(VAULT, 'Inbox.md'))

@@ -1,14 +1,17 @@
 #!/usr/bin/env node
 /**
  * UserPromptSubmit hook - scans the user's latest prompt for memory triggers
- * and writes a memory file if matched.
+ * and writes a memory note straight into the Obsidian vault.
  *
  * Stdin: { prompt: string, session_id?: string, cwd?: string }
- * Writes to: ~/.claude/projects/<escaped-cwd>/memory/<type>_<slug>.md
- * Updates:   ~/.claude/projects/<escaped-cwd>/memory/MEMORY.md (index)
+ * Writes to: <install>/vault/Memory/<type>_<slug>_<date>.md
+ * Updates:   <install>/vault/Memory/MEMORY.md (index)
+ *
+ * The vault IS the memory. Obsidian indexes these notes via the graph view +
+ * full-text search. SessionStart hook reads them back into new conversations.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { homedir } from 'node:os'
 
@@ -21,9 +24,18 @@ try { payload = JSON.parse(raw) } catch { process.exit(0) }
 const prompt = (payload.prompt || '').trim()
 if (!prompt || prompt.length < 15) process.exit(0)
 
-const cwd = payload.cwd || process.cwd()
-const escaped = cwd.replace(/^\//, '-').replace(/\//g, '-')
-const memDir = join(homedir(), '.claude', 'projects', escaped, 'memory')
+// Resolve install path - prefer NC_INSTALL_PATH (set by daemon launcher), fall back to cwd.
+const INSTALL = process.env.NC_INSTALL_PATH || payload.cwd || process.cwd()
+
+// Vault path lives in .env. Default to <install>/vault.
+let vaultPath = join(INSTALL, 'vault')
+const envPath = join(INSTALL, '.env')
+if (existsSync(envPath)) {
+  const envText = readFileSync(envPath, 'utf-8')
+  const match = envText.match(/^VAULT_PATH=(.+)$/m)
+  if (match) vaultPath = match[1].replace(/^["']|["']$/g, '').trim()
+}
+const memDir = join(vaultPath, 'Memory')
 
 const SIGNALS = {
   user: /\b(my (role|job|name|company|age|timezone|location|email|phone) is|i(?:'|\s)?m (a|an|the) |i work (at|as)|i live in)\b/i,
@@ -53,10 +65,14 @@ const fpath = join(memDir, fname)
 
 if (existsSync(fpath)) process.exit(0)
 
+const title = `${type}: ${slug.replace(/_/g, ' ')}`
+
 const body = `---
-name: ${type}: ${slug.replace(/_/g, ' ')}
+name: ${title}
 description: Auto-captured from prompt on ${ts}
 type: ${type}
+tags: [memory, ${type}]
+date: ${ts}
 ---
 
 ${prompt}
@@ -64,16 +80,27 @@ ${prompt}
 writeFileSync(fpath, body, 'utf-8')
 
 const indexPath = join(memDir, 'MEMORY.md')
-const title = `${type}: ${slug.replace(/_/g, ' ')}`
-const line = `- [${title}](${fname}) - captured ${ts}`
+const line = `- [[${fname.replace(/\.md$/, '')}|${title}]] - captured ${ts}`
 
 if (existsSync(indexPath)) {
   const existing = readFileSync(indexPath, 'utf-8')
-  if (!existing.includes(fname)) {
+  if (!existing.includes(fname.replace(/\.md$/, ''))) {
     writeFileSync(indexPath, existing.trimEnd() + '\n' + line + '\n', 'utf-8')
   }
 } else {
-  writeFileSync(indexPath, `# Memory Index\n\n${line}\n`, 'utf-8')
+  const seed = `---
+name: Memory Index
+description: Auto-captured memories from your Claude conversations
+tags: [memory, index]
+---
+
+# Memory
+
+Your assistant captures things here automatically. Each note has a type (user / feedback / project / reference). Open the graph view in Obsidian to see them clustered.
+
+${line}
+`
+  writeFileSync(indexPath, seed, 'utf-8')
 }
 
 process.exit(0)

@@ -52,6 +52,16 @@ if [[ "$(uname)" == "Darwin" ]] && ! command -v brew >/dev/null 2>&1; then
   if [[ -d /usr/local/bin ]]; then eval "$(/usr/local/bin/brew shellenv 2>/dev/null || true)"; fi
 fi
 
+# 1b. Install Obsidian.app on Mac if missing (vault is the memory)
+if [[ "$(uname)" == "Darwin" ]] && [ ! -d "/Applications/Obsidian.app" ]; then
+  if command -v brew >/dev/null 2>&1; then
+    say "installing Obsidian"
+    brew install --cask obsidian >/dev/null 2>&1 || warn "Obsidian install failed - install manually from obsidian.md"
+  else
+    warn "Obsidian not installed - get it from obsidian.md (vault still works as plain markdown)"
+  fi
+fi
+
 # 2. Auto-install Node 20+ if missing or too old
 if command -v node >/dev/null 2>&1; then
   NODE_MAJOR=$(node -e "console.log(parseInt(process.versions.node.split('.')[0],10))")
@@ -212,8 +222,15 @@ if [ "$HEALTHY" -eq 1 ]; then
     else
       open "$DASHBOARD_URL"
     fi
+    # Open vault in Obsidian alongside the dashboard
+    if [ -d "/Applications/Obsidian.app" ] && [ -d "$INSTALL_PATH/vault" ]; then
+      open -a Obsidian "$INSTALL_PATH/vault" 2>/dev/null || true
+    fi
   elif command -v xdg-open >/dev/null 2>&1; then
     xdg-open "$DASHBOARD_URL" >/dev/null 2>&1
+    if command -v obsidian >/dev/null 2>&1 && [ -d "$INSTALL_PATH/vault" ]; then
+      obsidian "$INSTALL_PATH/vault" >/dev/null 2>&1 &
+    fi
   fi
 else
   warn "dashboard didn't come up in 30s. Open it manually: $DASHBOARD_URL"

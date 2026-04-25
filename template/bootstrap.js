@@ -199,11 +199,13 @@ async function main() {
   console.log(`  ${DIM}3.${RESET} Symlink ${readdirSync(join(TEMPLATE_DIR, 'skills')).length} bundled skills into ${SKILLS_DIR} (existing skills with same names get .bak'd)`)
   console.log(`  ${DIM}4.${RESET} Write project-scoped settings to ${SETTINGS_PATH}`)
   console.log(`     ${DIM}(this enables bypassPermissions ONLY when working in this folder, NOT globally)${RESET}`)
+  console.log(`  ${DIM}5.${RESET} Install obsidian-cli globally via npm (lets Claude write vault notes from CLI)`)
+  console.log(`  ${DIM}6.${RESET} Create vault/Memory/ + vault/Journal/ - your assistant auto-saves notes here as Obsidian markdown`)
   if (bundle.installLaunchAgent) {
-    console.log(`  ${DIM}5.${RESET} Register auto-start service "${LAUNCHAGENT_LABEL}" via launchctl/schtasks/systemd`)
+    console.log(`  ${DIM}7.${RESET} Register auto-start service "${LAUNCHAGENT_LABEL}" via launchctl/schtasks/systemd`)
   }
   if (bundle.enableMorningBrief) {
-    console.log(`  ${DIM}6.${RESET} Seed daily morning-brief task in store/clawd.db`)
+    console.log(`  ${DIM}8.${RESET} Seed daily morning-brief task in store/clawd.db`)
   }
   console.log(`  ${DIM}*.${RESET} Bundle file at ${BUNDLE_PATH} is NOT deleted automatically - you delete it after\n`)
 
@@ -233,8 +235,19 @@ async function main() {
   info('Creating runtime dirs')
   mkdirSync(join(INSTALL_PATH, 'store'), { recursive: true })
   mkdirSync(join(INSTALL_PATH, 'workspace', 'uploads'), { recursive: true })
-  mkdirSync(join(INSTALL_PATH, 'memory'), { recursive: true })
-  ok('store/, workspace/uploads/, memory/')
+  // Vault is the memory. Memory + Journal subdirs live inside the vault
+  // so Obsidian indexes them via graph + full-text search.
+  mkdirSync(join(ctx.vaultPath, 'Memory'), { recursive: true })
+  mkdirSync(join(ctx.vaultPath, 'Journal'), { recursive: true })
+  ok('store/, workspace/uploads/, vault/Memory/, vault/Journal/')
+
+  info('Installing obsidian-cli (vault commands for Claude)')
+  try {
+    execSync('npm install -g obsidian-cli', { stdio: 'pipe' })
+    ok('obsidian-cli installed globally')
+  } catch (err) {
+    warn(`obsidian-cli install failed (${err.message?.split('\n')[0] || 'unknown'}). Vault still works as plain markdown.`)
+  }
 
   if (bundle.installLaunchAgent) {
     info('Installing auto-start service')
@@ -263,7 +276,8 @@ async function main() {
   console.log(`Next:`)
   console.log(`  cd ${INSTALL_PATH}`)
   console.log(`  claude                       ${DIM}# open Claude Code here${RESET}`)
-  console.log(`  open http://localhost:3000   ${DIM}# web dashboard${RESET}\n`)
+  console.log(`  open http://localhost:3000   ${DIM}# web dashboard${RESET}`)
+  console.log(`  ${DIM}your vault auto-opens in Obsidian${RESET}\n`)
 }
 
 main().catch((err) => {
