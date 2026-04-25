@@ -463,4 +463,52 @@ export const COURSE: Module[] = [
       },
     ],
   },
+
+  {
+    id: 'm9',
+    number: 9,
+    title: 'Tips & tricks',
+    lessons: [
+      {
+        id: 'm9-l1', number: 1, title: 'Forking conversations', duration: '3 min',
+        body: [
+          { type: 'p', text: "One of the most underused features in Claude Code. Fork lets you branch your current chat at any point - all context up to that moment carries over, but new messages only go to the new branch. You end up with multiple parallel threads sharing the same setup." },
+
+          { type: 'h', text: "Why it matters" },
+          { type: 'p', text: "Most people use Claude Code as one long chat. Halfway through a task, you remember an unrelated question. You either:" },
+          { type: 'ul', items: [
+            "Derail the main thread with a side question (loses focus)",
+            "Open a new chat with no context (loses memory)",
+            "Mentally hold the question (forget it later)",
+          ]},
+          { type: 'p', text: "Forking solves all three. Branch off, ask the side question, the main thread is untouched. Come back when you want." },
+
+          { type: 'h', text: "When to fork" },
+          { type: 'ul', items: [
+            "Mid-task you remember an unrelated question",
+            "Want to try two different approaches to the same problem - fork twice, run them in parallel, compare",
+            "Want to explore a 'what if' without committing",
+            "Trying a risky operation - fork first, if it goes badly, switch back to the main thread",
+            "Long task and you need to handle a quick interruption - fork, deal, return",
+          ]},
+
+          { type: 'h', text: "How to fork" },
+          { type: 'p', text: "In Claude Code (VS Code or terminal):" },
+          { type: 'ol', items: [
+            "Hit Cmd+Shift+F (Mac) or Ctrl+Shift+F (Windows)",
+            "OR right-click any message in the conversation history and pick 'Fork from here'",
+            "Name the fork so you can find it later (e.g. 'research path A')",
+            "New thread opens with all context up to that point",
+          ]},
+
+          { type: 'h', text: "Switching between forks" },
+          { type: 'p', text: "The conversation history dropdown shows all your active threads. Click one to switch. Each thread keeps its own message history but they share everything that happened BEFORE the fork point." },
+
+          { type: 'callout', tone: 'tip', title: "Pro move", text: "Fork three ways on a hard problem. Thread A: 'do it the simple way'. Thread B: 'do it the proper engineering way'. Thread C: 'what would Hormozi/Karpathy/etc do here'. Compare in 10 minutes." },
+
+          { type: 'callout', tone: 'info', title: "Memory shared, threads separate", text: "Anything saved to your assistant's long-term memory (auto-memory files, vault notes) is shared across all forks. Conversation messages stay separate." },
+        ],
+      },
+    ],
+  },
 ]
