@@ -48,7 +48,21 @@ export default function Landing() {
         <Link href="/audit"><button className="secondary">I already have a setup</button></Link>
       </div>
 
-      <p style={{ marginTop: 48, fontSize: 13 }}>
+      <div style={{
+        marginTop: 48,
+        padding: 20,
+        border: '1px solid var(--border)',
+        borderRadius: 10,
+        background: 'var(--panel)',
+      }}>
+        <h2 style={{ fontSize: 16, margin: 0, color: 'var(--accent)' }}>New here? Start with the full walkthrough</h2>
+        <p style={{ margin: '8px 0 12px', fontSize: 14, color: 'var(--muted)' }}>
+          Step-by-step setup instructions covering everything: VS Code, Claude Code, every API key, the wizard, the install, daily use, troubleshooting. About an hour to read, ten minutes to set up.
+        </p>
+        <Link href="/setup"><button>Setup Instructions →</button></Link>
+      </div>
+
+      <p style={{ marginTop: 32, fontSize: 13 }}>
         <Link href="/docs">How it works →</Link>
       </p>
     </div>
