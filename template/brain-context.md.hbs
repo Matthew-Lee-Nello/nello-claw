@@ -6,8 +6,14 @@ Auto-regenerated nightly from vault state. Injected into every new Claude Code s
 
 - **Name:** {{name}}
 - **Assistant:** {{assistantName}}
-- **Role:** {{role}}{{#if company}} at {{company}}{{/if}}
+{{#if occupation}}- **Occupation:** {{occupation}}{{/if}}
 {{#if location}}- **Location:** {{location}} ({{timezone}}){{/if}}
+
+{{#if bio}}
+### About {{name}}
+
+> {{bio}}
+{{/if}}
 
 ## Active Projects
 

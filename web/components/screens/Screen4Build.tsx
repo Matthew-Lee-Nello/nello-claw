@@ -22,23 +22,17 @@ Adapt the commands for my OS (Mac/Windows/Linux). Ask me before any destructive 
 const MAC_FALLBACK = 'curl -fsSL https://labs.nello.gg/i/mac | bash'
 const WIN_FALLBACK = 'irm https://labs.nello.gg/i/win | iex'
 
-const EXTRA_ABILITIES = [
-  { id: 'mcp-builder',        label: 'Help me build new connections',           desc: 'Walks you through plugging in any new service.' },
-  { id: 'mcp-implement',      label: 'Help me wire connections I find',         desc: 'Set up someone else\'s connection in under a minute.' },
-  { id: 'process-transcript', label: 'Turn meeting transcripts into notes',     desc: 'Drop in a transcript, get back tidy notes + action items.' },
-  { id: 'process-calls',      label: 'Turn call recordings into notes',         desc: 'Drop in audio or video, get back transcript + summary + actions.' },
-]
+function mask(s: string): string {
+  if (!s) return '(empty)'
+  if (s.length <= 8) return '****'
+  return s.slice(0, 4) + '...' + s.slice(-4)
+}
 
-export default function Screen7Finish() {
-  const { bundle, update } = useWizard()
+export default function Screen4Build() {
+  const { bundle } = useWizard()
   const [compiling, setCompiling] = useState(false)
   const [token, setToken] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
-
-  const toggleAbility = (id: string) => {
-    const list = bundle.optionalSkills
-    update({ optionalSkills: list.includes(id) ? list.filter(x => x !== id) : [...list, id] })
-  }
 
   const compileAndDownload = async () => {
     setCompiling(true)
@@ -63,78 +57,28 @@ export default function Screen7Finish() {
     }
   }
 
-
   return (
     <div className="screen">
-      <h2>7. Last bits</h2>
-      <p className="intro">A few choices about how your assistant runs, then we hand you the install command.</p>
+      <h2>4. Review and build</h2>
+      <p className="intro">Quick check, then we hand you the install command.</p>
 
-      <div className="field">
-        <label>
-          <input type="checkbox" checked={bundle.installTelegram} onChange={e => update({ installTelegram: e.target.checked })} />
-          {' '}Text and voice your assistant from Telegram
-        </label>
-        <div className="panel-help">Send a message from anywhere, get an answer back. Works while you are away from your computer.</div>
+      <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 20, fontSize: 14, lineHeight: 1.7 }}>
+        <div><strong>You:</strong> {bundle.name || '(missing)'}</div>
+        <div><strong>Assistant name:</strong> {bundle.assistantName || '(missing)'}</div>
+        <div><strong>Occupation:</strong> {bundle.occupation || '(missing)'}</div>
+        <div style={{ marginTop: 8 }}><strong>About you:</strong></div>
+        <div style={{ color: 'var(--muted)', marginLeft: 12, fontStyle: 'italic' }}>
+          {bundle.bio || '(missing)'}
+        </div>
+        <div style={{ marginTop: 12 }}><strong>Telegram bot:</strong> {mask(bundle.keys.TELEGRAM_BOT_TOKEN ?? '')}</div>
+        <div><strong>Google email:</strong> {bundle.keys.GOOGLE_USER_EMAIL || '(missing)'}</div>
+        <div><strong>Google OAuth ID:</strong> {mask(bundle.keys.GOOGLE_OAUTH_CLIENT_ID ?? '')}</div>
+        <div><strong>Google OAuth Secret:</strong> {mask(bundle.keys.GOOGLE_OAUTH_CLIENT_SECRET ?? '')}</div>
       </div>
 
-      <div className="field">
-        <label>
-          <input type="checkbox" checked={bundle.installDashboard} onChange={e => update({ installDashboard: e.target.checked })} />
-          {' '}Personal chat hub on your Mac
-        </label>
-        <div className="panel-help">Your own private chat window at <code>localhost:3000</code>. No prompts, no permission walls - your assistant just does what you ask.</div>
-      </div>
-
-      <div className="field">
-        <label>
-          <input type="checkbox" checked={bundle.installLaunchAgent} onChange={e => update({ installLaunchAgent: e.target.checked })} />
-          {' '}Auto-start when I turn on my Mac
-        </label>
-        <div className="panel-help">Your assistant boots up automatically. Always ready.</div>
-      </div>
-
-      <div className="field">
-        <label>
-          <input type="checkbox" checked={bundle.enableMorningBrief} onChange={e => update({ enableMorningBrief: e.target.checked })} />
-          {' '}Morning briefing every day at 9am
-        </label>
-        {bundle.enableMorningBrief && (
-          <>
-            <textarea
-              value={bundle.morningBriefPrompt}
-              onChange={e => update({ morningBriefPrompt: e.target.value })}
-              style={{ marginTop: 8 }}
-              placeholder="What you want your assistant to brief you on each morning"
-            />
-            <input
-              value={bundle.morningBriefCron}
-              onChange={e => update({ morningBriefCron: e.target.value })}
-              style={{ marginTop: 8 }}
-              placeholder="0 9 * * *"
-            />
-            <div className="panel-help">Default is 9am local time. The format above is cron - leave it as is unless you know what you are doing.</div>
-          </>
-        )}
-      </div>
-
-      <div className="field">
-        <label>Voice</label>
-        <select value={bundle.voiceSource} onChange={e => update({ voiceSource: e.target.value as any })}>
-          <option value="online">Online (free, fast, needs Groq key)</option>
-          <option value="local">Local (no internet needed, free forever)</option>
-          <option value="off">Voice off</option>
-        </select>
-        <div className="panel-help">How your assistant understands voice notes. Online is easier, local is fully private.</div>
-      </div>
-
-      <div className="field">
-        <label>Extra abilities (optional)</label>
-        {EXTRA_ABILITIES.map(s => (
-          <label key={s.id} style={{ display: 'block', margin: '8px 0' }}>
-            <input type="checkbox" checked={bundle.optionalSkills.includes(s.id)} onChange={() => toggleAbility(s.id)} />
-            {' '}{s.label} <span style={{ color: 'var(--muted)', fontSize: 12 }}>- {s.desc}</span>
-          </label>
-        ))}
+      <div style={{ marginTop: 20, padding: 16, background: 'var(--accent-dim)', border: '1px solid var(--accent)', borderRadius: 8, fontSize: 13 }}>
+        <strong style={{ color: 'var(--accent)' }}>Want web search / scraping / Notion / Linear / anything else?</strong>
+        {' '}Once your assistant is running, just say <em>&quot;find me a connection for X&quot;</em> in the dashboard. It searches the open ecosystem, walks you through getting any keys you need, installs it. No need to add anything here.
       </div>
 
       <div className="nav-buttons">

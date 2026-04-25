@@ -4,9 +4,13 @@ export interface Client { name: string; status: string; slug?: string }
 export interface CustomPrefix { prefix: string; description: string }
 
 export interface Bundle {
-  // Screen 1 - Identity
+  // Screen 1 - About you (the only personalisation surface)
   name: string
   assistantName: string
+  occupation: string
+  bio: string
+
+  // Silently defaulted - kept on the Bundle so bootstrap.js still has every field it expects
   timezone: string
   location: string
   age?: string
@@ -15,7 +19,6 @@ export interface Bundle {
   communicationStyle: 'blunt' | 'warm' | 'formal' | 'casual'
   language: 'AU' | 'US' | 'UK' | 'other'
 
-  // Screen 2 - Work
   role: string
   company: string
   industry: string
@@ -24,18 +27,15 @@ export interface Bundle {
   services: string[]
   tools: string[]
 
-  // Screen 3 - People
   teamMembers: Person[]
   clients: Client[]
   mentors: Person[]
 
-  // Screen 4 - Vault
   vaultPreset: 'nello' | 'para' | 'zettelkasten' | 'custom'
   vaultPath: string
   customPrefixes?: CustomPrefix[]
   graphifyEnabled: boolean
 
-  // Screen 5 - Voice
   emDashPolicy: 'never' | 'sparingly' | 'free'
   oxfordComma: boolean
   bannedWords: string[]
@@ -43,7 +43,7 @@ export interface Bundle {
   enableKarpathyGuidelines: boolean
   enableAiHumanizer: boolean
 
-  // Screen 6 - Keys + MCPs
+  // Screens 2 + 3 - the keys we still ask for
   keys: Record<string, string>
   mcps: {
     google?: boolean
@@ -56,7 +56,6 @@ export interface Bundle {
     n8n?: boolean
   }
 
-  // Screen 7 - Surfaces + Automation
   installTelegram: boolean
   installDashboard: boolean
   installLaunchAgent: boolean
@@ -67,10 +66,9 @@ export interface Bundle {
   skillPack: string[]
   optionalSkills: string[]
 
-  // Platform pick (set on landing or auto-detected via UA)
   platform: Platform
 }
 
-export type Screen = 1 | 2 | 3 | 4 | 5 | 6 | 7
+export type Screen = 1 | 2 | 3 | 4
 
 export type Platform = 'mac' | 'windows' | 'linux'

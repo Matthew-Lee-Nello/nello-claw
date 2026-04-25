@@ -153,6 +153,42 @@ function installService() {
   if (res.status !== 0) fail(`service install failed (exit ${res.status})`)
 }
 
+function installUv() {
+  // uv ships uvx, which `template/.mcp.json.hbs` calls to run `workspace-mcp`
+  // (the Google Workspace MCP). Without uv, Google MCP fails with command not found.
+  // Idempotent. Universal across all install entry paths.
+  try { execSync('which uv', { stdio: 'pipe' }); ok('uv already installed'); return } catch {}
+  const platform = process.platform
+  if (platform === 'darwin') {
+    try {
+      execSync('which brew', { stdio: 'pipe' })
+      execSync('brew install uv', { stdio: 'pipe' })
+      ok('uv installed via Homebrew')
+    } catch {
+      try {
+        execSync('curl -LsSf https://astral.sh/uv/install.sh | sh', { stdio: 'pipe' })
+        ok('uv installed via astral.sh script')
+      } catch {
+        warn('uv install failed - Google Workspace MCP will not run until you install uv (https://docs.astral.sh/uv/)')
+      }
+    }
+  } else if (platform === 'win32') {
+    try {
+      execSync('winget install --silent --accept-source-agreements --accept-package-agreements astral-sh.uv', { stdio: 'pipe' })
+      ok('uv installed via winget')
+    } catch {
+      warn('uv install failed - run: powershell -c "irm https://astral.sh/uv/install.ps1 | iex"')
+    }
+  } else {
+    try {
+      execSync('curl -LsSf https://astral.sh/uv/install.sh | sh', { stdio: 'pipe' })
+      ok('uv installed via astral.sh script')
+    } catch {
+      warn('uv install failed - install manually from https://docs.astral.sh/uv/')
+    }
+  }
+}
+
 function installObsidianApp() {
   // Cross-platform Obsidian.app install. Idempotent - skips if already installed.
   // Runs from bootstrap so EVERY entry path gets Obsidian (bash one-liner, PowerShell,
@@ -277,6 +313,9 @@ async function main() {
   } catch (err) {
     warn(`obsidian-cli install failed (${err.message?.split('\n')[0] || 'unknown'}). Vault still works as plain markdown.`)
   }
+
+  info('Installing uv (Python runtime for Google Workspace MCP)')
+  installUv()
 
   if (bundle.installLaunchAgent) {
     info('Installing auto-start service')

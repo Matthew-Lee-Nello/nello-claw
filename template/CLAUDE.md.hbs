@@ -36,20 +36,18 @@ Rules you never break:
 ## Who Is {{name}}
 
 - **Name:** {{name}}
+{{#if occupation}}- **Occupation:** {{occupation}}{{/if}}
 {{#if location}}- **Location:** {{location}} ({{timezone}}){{else}}- **Timezone:** {{timezone}}{{/if}}
 {{#if age}}- **Age / life stage:** {{age}}{{/if}}
-{{#if company}}- **Company:** {{company}}{{#if industry}} - {{industry}}{{/if}}{{/if}}
-{{#if role}}- **Role:** {{role}}{{/if}}
 {{#if values.length}}- **Values:** {{#each values}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}
-{{#if faith}}- **Faith / worldview:** {{faith}}{{/if}}
 
-## Business Context
+{{#if bio}}
+### About {{name}} (in their own words)
 
-{{#if company}}- **Company:** {{company}}{{/if}}
-{{#if industry}}- **Industry:** {{industry}}{{/if}}
-{{#if targetCustomer}}- **Target customer:** {{targetCustomer}}{{/if}}
-{{#if services.length}}- **Services:** {{#each services}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}
-{{#if tools.length}}- **Tools:** {{#each tools}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}{{/if}}
+> {{bio}}
+
+This is {{name}}'s self-description from setup. Treat it as the source of truth for tone, priorities, and what matters to them. As you talk to {{name}}, your auto-memory hook captures more detail into `vault/Memory/` - this section stays fixed.
+{{/if}}
 
 {{#if projects.length}}
 ## Active Projects

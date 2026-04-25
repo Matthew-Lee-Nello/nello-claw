@@ -6,10 +6,12 @@ import NavButtons from '@/components/NavButtons'
 export default function Screen1Identity() {
   const { bundle, update } = useWizard()
 
+  const ready = bundle.name.trim() && bundle.assistantName.trim() && bundle.occupation.trim() && bundle.bio.trim().length > 20
+
   return (
     <div className="screen">
       <h2>1. About you</h2>
-      <p className="intro">Who is your assistant talking to? This is the basic profile your assistant uses every time.</p>
+      <p className="intro">Just the basics. Your assistant fills in the rest by talking to you.</p>
 
       <div className="row">
         <div className="field">
@@ -17,53 +19,34 @@ export default function Screen1Identity() {
           <input value={bundle.name} onChange={e => update({ name: e.target.value })} placeholder="e.g. Matt" />
         </div>
         <div className="field">
-          <label>What should you call your assistant?</label>
+          <label>What should we call your assistant?</label>
           <input value={bundle.assistantName} onChange={e => update({ assistantName: e.target.value })} placeholder="e.g. Luke, Ada, Max" />
         </div>
       </div>
 
-      <div className="row">
-        <div className="field">
-          <label>Your timezone</label>
-          <input value={bundle.timezone} onChange={e => update({ timezone: e.target.value })} />
-        </div>
-        <div className="field">
-          <label>Where you are based (optional)</label>
-          <input value={bundle.location} onChange={e => update({ location: e.target.value })} placeholder="e.g. Brisbane, Sydney, NYC" />
-        </div>
-      </div>
-
       <div className="field">
-        <label>Three things you stand for (optional)</label>
+        <label>What do you do?</label>
         <input
-          value={bundle.values.join(', ')}
-          onChange={e => update({ values: e.target.value.split(',').map(s => s.trim()).filter(Boolean).slice(0, 3) })}
-          placeholder="e.g. discipline, honesty, doing it for the right reasons"
+          value={bundle.occupation}
+          onChange={e => update({ occupation: e.target.value })}
+          placeholder="e.g. buyer's agent in Brisbane / indie hacker / founder of X"
         />
       </div>
 
-      <div className="row">
-        <div className="field">
-          <label>How direct should they be?</label>
-          <select value={bundle.communicationStyle} onChange={e => update({ communicationStyle: e.target.value as any })}>
-            <option value="blunt">Blunt - no fluff, get to the point</option>
-            <option value="warm">Warm - friendly, encouraging</option>
-            <option value="formal">Formal - professional, polished</option>
-            <option value="casual">Casual - relaxed, chatty</option>
-          </select>
-        </div>
-        <div className="field">
-          <label>Spelling style</label>
-          <select value={bundle.language} onChange={e => update({ language: e.target.value as any })}>
-            <option value="AU">Australian (colour, organise)</option>
-            <option value="US">American (color, organize)</option>
-            <option value="UK">British (colour, organise)</option>
-            <option value="other">Other</option>
-          </select>
+      <div className="field">
+        <label>Tell us about you</label>
+        <textarea
+          value={bundle.bio}
+          onChange={e => update({ bio: e.target.value })}
+          rows={5}
+          placeholder="2-3 sentences. e.g. I'm a buyer's agent in Brisbane working with first-home buyers. I value direct communication and hate AI cliches. My main tools are GHL and Xero."
+        />
+        <div className="panel-help">
+          This goes verbatim into your assistant&apos;s personality file. Be specific about how you want to be spoken to and what tools / people / projects matter most. You can edit it any time after install.
         </div>
       </div>
 
-      <NavButtons disableNext={!bundle.name || !bundle.assistantName} />
+      <NavButtons disableNext={!ready} />
     </div>
   )
 }
