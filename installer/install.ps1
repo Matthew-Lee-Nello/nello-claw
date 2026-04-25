@@ -158,19 +158,43 @@ foreach ($shortcutPath in @($startMenu, $desktop)) {
 }
 Ok "shortcuts created (Start Menu + Desktop)"
 
-# 11. Open the dashboard
-Say "opening dashboard"
-Start-Sleep -Seconds 2
-if ($chromePath) {
-  Start-Process -FilePath $chromePath -ArgumentList "--app=http://localhost:3000"
+# 11. Wait for daemon health, then open the dashboard
+$DashboardPort = "3000"
+$envFile = Join-Path $InstallPath ".env"
+if (Test-Path $envFile) {
+  $portLine = Get-Content $envFile | Select-String -Pattern '^DASHBOARD_PORT='
+  if ($portLine) { $DashboardPort = (($portLine -split '=', 2)[1]).Trim('"') }
+}
+$DashboardUrl = "http://localhost:$DashboardPort"
+
+Say "waiting for dashboard to come up"
+$Healthy = $false
+for ($i = 0; $i -lt 30; $i++) {
+  try {
+    $resp = Invoke-WebRequest -Uri "$DashboardUrl/api/monitoring/health" -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop
+    if ($resp.StatusCode -eq 200) { $Healthy = $true; break }
+  } catch {}
+  Start-Sleep -Seconds 1
+}
+
+if (-not $Healthy) {
+  Warn "dashboard didn't come up in 30s. Open it manually: $DashboardUrl"
+  Warn "if that fails, check $InstallPath\store\server.log for errors"
+} elseif ($chromePath) {
+  Ok "dashboard is up at $DashboardUrl"
+  Start-Process -FilePath $chromePath -ArgumentList "--app=$DashboardUrl"
 } else {
-  Start-Process "http://localhost:3000"
+  Ok "dashboard is up at $DashboardUrl"
+  Start-Process $DashboardUrl
 }
 
 Stop-Transcript | Out-Null
 
 Write-Host ""
 Write-Host "${Accent}nello-claw ready.${Reset}"
-Write-Host "  Dashboard:  http://localhost:3000"
+Write-Host "  Dashboard:  $DashboardUrl"
 Write-Host "  ${Dim}Send a message to your Telegram bot to finish setup.${Reset}"
+Write-Host ""
+Write-Host "If the dashboard didn't open automatically:"
+Write-Host "  ${Dim}Start-Process '$DashboardUrl'${Reset} or paste in browser"
 Write-Host ""

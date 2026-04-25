@@ -186,21 +186,42 @@ INFOPLIST
   ok "app shortcut at $APP_DIR"
 fi
 
-# 11. Open the dashboard now
-say "opening dashboard"
-sleep 2
-if [[ "$(uname)" == "Darwin" ]]; then
-  # Touch the .app so Finder picks up the new icon
-  touch "$HOME/Applications/nello-claw.app" 2>/dev/null
-  if [ -d "$HOME/Applications/nello-claw.app" ]; then
-    open "$HOME/Applications/nello-claw.app"
-  else
-    open "http://localhost:3000"
+# 11. Wait for daemon health, then open the dashboard
+# Read DASHBOARD_PORT from .env (default 3000)
+DASHBOARD_PORT=$(grep -E '^DASHBOARD_PORT=' "$INSTALL_PATH/.env" 2>/dev/null | cut -d= -f2 | tr -d '"' || true)
+DASHBOARD_PORT=${DASHBOARD_PORT:-3000}
+DASHBOARD_URL="http://localhost:${DASHBOARD_PORT}"
+
+say "waiting for dashboard to come up"
+HEALTHY=0
+for i in $(seq 1 30); do
+  if curl -fs --max-time 2 "$DASHBOARD_URL/api/monitoring/health" >/dev/null 2>&1; then
+    HEALTHY=1
+    break
   fi
-elif command -v xdg-open >/dev/null 2>&1; then
-  xdg-open "http://localhost:3000" >/dev/null 2>&1
+  sleep 1
+done
+
+if [ "$HEALTHY" -eq 1 ]; then
+  ok "dashboard is up at $DASHBOARD_URL"
+  say "opening it now"
+  if [[ "$(uname)" == "Darwin" ]]; then
+    touch "$HOME/Applications/nello-claw.app" 2>/dev/null
+    if [ -d "$HOME/Applications/nello-claw.app" ]; then
+      open "$HOME/Applications/nello-claw.app"
+    else
+      open "$DASHBOARD_URL"
+    fi
+  elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open "$DASHBOARD_URL" >/dev/null 2>&1
+  fi
+else
+  warn "dashboard didn't come up in 30s. Open it manually: $DASHBOARD_URL"
+  warn "if that fails, check ${INSTALL_PATH}/store/server.log for errors"
 fi
 
 printf "\n${ACCENT}nello-claw ready.${RESET}\n"
-printf "  Dashboard:  http://localhost:3000\n"
+printf "  Dashboard:  %s\n" "$DASHBOARD_URL"
 printf "  ${DIM}Send a message to your Telegram bot to finish setup.${RESET}\n\n"
+printf "If the dashboard didn't open automatically:\n"
+printf "  ${DIM}open %s${RESET} (Mac) or paste in browser\n\n" "$DASHBOARD_URL"
