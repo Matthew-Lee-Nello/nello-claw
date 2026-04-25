@@ -12,3 +12,5 @@ workspace/
 coverage/
 .vercel/
 tsconfig.tsbuildinfo
+.vercel
+.env*.local

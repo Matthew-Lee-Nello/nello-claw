@@ -52,16 +52,6 @@ if [[ "$(uname)" == "Darwin" ]] && ! command -v brew >/dev/null 2>&1; then
   if [[ -d /usr/local/bin ]]; then eval "$(/usr/local/bin/brew shellenv 2>/dev/null || true)"; fi
 fi
 
-# 1b. Install Obsidian.app on Mac if missing (vault is the memory)
-if [[ "$(uname)" == "Darwin" ]] && [ ! -d "/Applications/Obsidian.app" ]; then
-  if command -v brew >/dev/null 2>&1; then
-    say "installing Obsidian"
-    brew install --cask obsidian >/dev/null 2>&1 || warn "Obsidian install failed - install manually from obsidian.md"
-  else
-    warn "Obsidian not installed - get it from obsidian.md (vault still works as plain markdown)"
-  fi
-fi
-
 # 2. Auto-install Node 20+ if missing or too old
 if command -v node >/dev/null 2>&1; then
   NODE_MAJOR=$(node -e "console.log(parseInt(process.versions.node.split('.')[0],10))")

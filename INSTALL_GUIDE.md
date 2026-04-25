@@ -48,7 +48,7 @@ When the install finishes the dashboard opens in app-mode AND your vault opens i
 5. Symlinks the 7 default abilities (skills) into `~/.claude/skills/`. If a skill with the same name already exists there, the existing one is renamed to `.bak-<timestamp>` first
 6. Writes a project-scoped `.claude/settings.json` inside `<install-folder>/` with hooks + `bypassPermissions: true` for THAT project only
 7. Creates `store/`, `workspace/uploads/`, `vault/Memory/`, `vault/Journal/` directories
-8. Installs `obsidian-cli` globally via npm so your assistant can drive Obsidian from the command line
+8. Installs Obsidian.app (Homebrew cask on Mac, winget on Windows) and `obsidian-cli` globally via npm so your assistant can drive Obsidian from the command line. Skipped if Obsidian is already installed.
 8. If you opted into auto-start: registers the service via `launchctl` (Mac) / `schtasks` (Windows) / `systemctl --user` (Linux)
 9. If you opted into morning brief: seeds a scheduled task in the SQLite DB
 10. Runs `nello-claw audit` to verify everything

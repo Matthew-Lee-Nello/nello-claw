@@ -153,6 +153,34 @@ function installService() {
   if (res.status !== 0) fail(`service install failed (exit ${res.status})`)
 }
 
+function installObsidianApp() {
+  // Cross-platform Obsidian.app install. Idempotent - skips if already installed.
+  // Runs from bootstrap so EVERY entry path gets Obsidian (bash one-liner, PowerShell,
+  // Claude Code paste-in, manual git clone + node bootstrap all hit this same code).
+  const platform = process.platform
+  if (platform === 'darwin') {
+    if (existsSync('/Applications/Obsidian.app')) { ok('Obsidian.app already installed'); return }
+    try {
+      execSync('which brew', { stdio: 'pipe' })
+      execSync('brew install --cask obsidian', { stdio: 'pipe' })
+      ok('Obsidian.app installed via Homebrew')
+    } catch {
+      warn('Obsidian.app not installed - get it from obsidian.md (vault still works as plain markdown)')
+    }
+  } else if (platform === 'win32') {
+    const exe = join(process.env.LOCALAPPDATA || '', 'Obsidian', 'Obsidian.exe')
+    if (existsSync(exe)) { ok('Obsidian.exe already installed'); return }
+    try {
+      execSync('winget install --silent --accept-source-agreements --accept-package-agreements Obsidian.Obsidian', { stdio: 'pipe' })
+      ok('Obsidian installed via winget')
+    } catch {
+      warn('Obsidian not installed - get it from obsidian.md (vault still works as plain markdown)')
+    }
+  } else {
+    warn('Linux: install Obsidian manually from obsidian.md (vault still works as plain markdown)')
+  }
+}
+
 function seedMorningBrief(bundle) {
   if (!bundle.enableMorningBrief) return
   const prompt = bundle.morningBriefPrompt || 'Morning brief: what matters today?'
@@ -241,7 +269,8 @@ async function main() {
   mkdirSync(join(ctx.vaultPath, 'Journal'), { recursive: true })
   ok('store/, workspace/uploads/, vault/Memory/, vault/Journal/')
 
-  info('Installing obsidian-cli (vault commands for Claude)')
+  info('Setting up Obsidian (vault is the permanent memory)')
+  installObsidianApp()
   try {
     execSync('npm install -g obsidian-cli', { stdio: 'pipe' })
     ok('obsidian-cli installed globally')

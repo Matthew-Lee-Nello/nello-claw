@@ -73,13 +73,9 @@ if (-not (Get-Command pnpm -ErrorAction SilentlyContinue)) {
 }
 Ok "pnpm $(pnpm --version)"
 
-# 4b. Auto-install Obsidian (vault is the memory)
+# Obsidian.app install delegated to template/bootstrap.js so all entry paths hit
+# the same code (bash one-liner / PowerShell / Claude Code paste-in / manual clone).
 $ObsidianExe = "$env:LOCALAPPDATA\Obsidian\Obsidian.exe"
-if (-not (Test-Path $ObsidianExe)) {
-  Say "installing Obsidian"
-  winget install --silent --accept-source-agreements --accept-package-agreements Obsidian.Obsidian 2>$null | Out-Null
-  if (-not (Test-Path $ObsidianExe)) { Warn "Obsidian install failed - get it from obsidian.md (vault still works as plain markdown)" }
-}
 
 if (-not (Get-Command claude -ErrorAction SilentlyContinue)) {
   Say "installing Claude Code CLI"
