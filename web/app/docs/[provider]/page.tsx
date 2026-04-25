@@ -34,24 +34,6 @@ const PROVIDERS: Record<string, Doc> = {
     ],
   },
 
-  groq: {
-    title: 'Groq API key (voice transcription)',
-    intro: 'Groq runs Whisper for free. You only need this if you want to send voice notes to your bot. Skip otherwise.',
-    steps: [
-      { do: 'Open https://console.groq.com in your browser.' },
-      { do: 'Click Sign Up. Use Google or email, whichever is easier.' },
-      { do: 'Once logged in, look at the left sidebar.' },
-      { do: 'Click API Keys.' },
-      { do: 'Click Create API Key. Name it "nello-claw".' },
-      { do: 'Groq shows the key once. Copy it now.', detail: 'If you close the dialog you cannot see it again. You will have to make another one.' },
-      { do: 'Paste into the wizard field labelled "Groq API key".', pasteHere: 'GROQ_API_KEY' },
-    ],
-    troubleshoot: [
-      { problem: 'I closed the dialog before copying', fix: 'Go back to API Keys, click Create API Key again. Make a new one.' },
-      { problem: 'Says "rate limit exceeded" later', fix: 'Free tier resets daily. Wait a few hours or upgrade.' },
-    ],
-  },
-
   google: {
     title: 'Google Workspace OAuth (Gmail / Drive / Docs / Sheets / Calendar)',
     intro: 'This lets Claude read and write your Google Workspace stuff. Takes 5-10 minutes the first time. Free.',
@@ -80,19 +62,6 @@ const PROVIDERS: Record<string, Doc> = {
     ],
   },
 
-  tavily: {
-    title: 'Tavily API key (research skill)',
-    intro: 'Tavily does AI-friendly web search. Used by the research skill. Free tier is plenty for personal use.',
-    steps: [
-      { do: 'Open https://tavily.com in your browser.' },
-      { do: 'Click Sign Up. Use Google or GitHub for fastest signup.' },
-      { do: 'After signup you land on the dashboard.' },
-      { do: 'Look for the API Key panel. The key starts with "tvly-".' },
-      { do: 'Click the copy icon next to the key.', pasteHere: 'TAVILY_API_KEY' },
-      { do: 'Paste into the wizard field labelled "Tavily API key".' },
-    ],
-  },
-
   exa: {
     title: 'Exa API key (research skill)',
     intro: 'Exa is semantic web search built for LLMs. Used by the research skill. Free tier covers casual use.',
@@ -107,18 +76,6 @@ const PROVIDERS: Record<string, Doc> = {
     ],
   },
 
-  firecrawl: {
-    title: 'Firecrawl API key (research + scraping skill)',
-    intro: 'Firecrawl turns any URL into clean markdown for Claude. Free tier = 500 pages a month.',
-    steps: [
-      { do: 'Open https://firecrawl.dev in your browser.' },
-      { do: 'Click Sign Up at the top right.' },
-      { do: 'Sign up with Google or email.' },
-      { do: 'Once logged in, click your avatar (top right) and pick API Keys.' },
-      { do: 'A key is auto-generated. Click the copy icon next to it.', pasteHere: 'FIRECRAWL_API_KEY' },
-      { do: 'Paste into the wizard field labelled "Firecrawl API key".' },
-    ],
-  },
 }
 
 export default async function ProviderDoc({ params }: { params: Promise<{ provider: string }> }) {

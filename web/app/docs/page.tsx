@@ -9,9 +9,8 @@ export default function Docs() {
         you tell them, and just do the work.
       </p>
       <p>
-        You answer seven quick questions about who you are, what you do, who is in your
-        world, and how you like things done. We bundle that into a setup file. You paste
-        one line into Claude Code and your assistant is up in about ten minutes.
+        Three quick screens, five keys, paste one prompt into Claude Code. Your assistant
+        is up in about ten minutes.
       </p>
 
       <h2 style={{ marginTop: 32 }}>What stays on your Mac</h2>
@@ -24,12 +23,14 @@ export default function Docs() {
       <h2 style={{ marginTop: 32 }}>Connecting your accounts (step-by-step guides)</h2>
       <ul style={{ paddingLeft: 20, lineHeight: 1.9 }}>
         <li><Link href="/docs/telegram">Telegram</Link> - so your assistant can text you anywhere. Free, takes 60 seconds.</li>
-        <li><Link href="/docs/groq">Groq</Link> - so your assistant can hear voice notes. Free, takes 2 minutes.</li>
         <li><Link href="/docs/google">Google Workspace</Link> - Gmail, Drive, Docs, Calendar. Free, takes 5-10 minutes.</li>
-        <li><Link href="/docs/tavily">Tavily</Link> - live web research. Free tier, 1 minute.</li>
-        <li><Link href="/docs/exa">Exa</Link> - smarter web search. Free tier, 1 minute.</li>
-        <li><Link href="/docs/firecrawl">Firecrawl</Link> - read any website. Free tier, 1 minute.</li>
+        <li><Link href="/docs/exa">Exa</Link> - smart web research for your assistant. Free tier, 1 minute.</li>
       </ul>
+
+      <p style={{ marginTop: 24, color: 'var(--muted)', fontSize: 14 }}>
+        Need anything else (Notion, Linear, GitHub, scraping, voice transcription)? Once your
+        assistant is running, just say <em>&quot;find me a connection for X&quot;</em>. It walks you through it.
+      </p>
 
       <p style={{ marginTop: 40 }}>
         <Link href="/wizard"><button>Set up my assistant</button></Link>{' '}

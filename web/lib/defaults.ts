@@ -37,23 +37,40 @@ export const DEFAULT_BUNDLE: Bundle = {
   enableKarpathyGuidelines: true,
   enableAiHumanizer: true,
 
-  // User-entered (Screens 2 + 3)
+  // User-entered (Screen 2 - Connections)
   keys: {},
-  mcps: { google: true },
 
-  // Surfaces - all on by default, no user choice
+  // All connections that work without keys + the ones we collect keys for, auto-on.
+  // Apify + n8n stay off (need keys we no longer ask for).
+  mcps: {
+    google: true,
+    exa: true,
+    obsidian: true,
+    gitnexus: true,
+    apify: false,
+    n8n: false,
+  },
+
+  // Surfaces - all on, no user choice
   installTelegram: true,
   installDashboard: true,
   installLaunchAgent: true,
   enableMorningBrief: true,
   morningBriefPrompt: 'Morning brief. 3 lines max per section.\n1. What matters today (Inbox + today\'s journal)\n2. Calendar top 3\n3. Open loops to close',
   morningBriefCron: '0 9 * * *',
-  voiceSource: 'off',
+
+  // Voice: local TTS by default. voice-local package handles platform detection;
+  // on non-Mac it falls back to off gracefully.
+  voiceSource: 'local',
+
+  // Default skill pack (always installed)
   skillPack: [
     'karpathy-guidelines', 'find-skills', 'find-mcp', 'research',
     'checkpoint', 'think', 'self-improving', 'simplify',
     'vault-audit', 'update-config', 'fewer-permission-prompts',
   ],
-  optionalSkills: [],
+  // Extra abilities - auto-included so users get them on day 1
+  optionalSkills: ['process-transcript', 'process-calls', 'mcp-builder', 'mcp-implement'],
+
   platform: 'mac',
 }

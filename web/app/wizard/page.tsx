@@ -3,15 +3,13 @@
 import { useWizard } from '@/lib/store'
 import type { Screen } from '@/lib/types'
 import Screen1Identity from '@/components/screens/Screen1Identity'
-import Screen2Telegram from '@/components/screens/Screen2Telegram'
-import Screen3Google from '@/components/screens/Screen3Google'
-import Screen4Build from '@/components/screens/Screen4Build'
+import Screen2Connections from '@/components/screens/Screen2Connections'
+import Screen3Build from '@/components/screens/Screen3Build'
 
 const LABELS: Record<Screen, string> = {
   1: 'About you',
-  2: 'Phone',
-  3: 'Google',
-  4: 'Build',
+  2: 'Connections',
+  3: 'Build',
 }
 
 export default function WizardPage() {
@@ -21,7 +19,7 @@ export default function WizardPage() {
     <div className="wizard">
       <nav className="wizard-nav">
         <ol>
-          {([1, 2, 3, 4] as Screen[]).map((n) => (
+          {([1, 2, 3] as Screen[]).map((n) => (
             <li
               key={n}
               className={`${screen === n ? 'active' : ''} ${screen > n ? 'done' : ''}`}
@@ -34,9 +32,8 @@ export default function WizardPage() {
       </nav>
       <main>
         {screen === 1 && <Screen1Identity />}
-        {screen === 2 && <Screen2Telegram />}
-        {screen === 3 && <Screen3Google />}
-        {screen === 4 && <Screen4Build />}
+        {screen === 2 && <Screen2Connections />}
+        {screen === 3 && <Screen3Build />}
       </main>
     </div>
   )

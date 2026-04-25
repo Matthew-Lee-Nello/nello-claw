@@ -22,7 +22,7 @@ export const useWizard = create<WizardState>()(
       update: (patch) => set((st) => ({ bundle: { ...st.bundle, ...patch } })),
       reset: () => set({ screen: 1, bundle: DEFAULT_BUNDLE }),
     }),
-    // v2 - 4-screen wizard. v1 schema (7 screens) discarded on load.
-    { name: 'nello-claw-wizard-v2' }
+    // v3 - 3-screen wizard (About / Connections / Build). Old schemas discard on load.
+    { name: 'nello-claw-wizard-v3' }
   )
 )
