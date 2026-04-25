@@ -38,14 +38,14 @@ export default function Screen3People() {
 
   return (
     <div className="screen">
-      <h2>3. People</h2>
-      <p className="intro">Who's in your world. Gets seeded as Person- and Client- notes in your vault.</p>
+      <h2>3. People in your world</h2>
+      <p className="intro">Tell your assistant about the people you work with. They will remember names, roles, and the context that matters - so you do not have to.</p>
 
       <div className="field">
-        <label>Team members</label>
+        <label>Team</label>
         {repeatable(bundle.teamMembers, 'teamMembers', [
           { name: 'name', placeholder: 'Name' },
-          { name: 'role', placeholder: 'Role' },
+          { name: 'role', placeholder: 'What they do' },
         ])}
       </div>
 
@@ -53,15 +53,15 @@ export default function Screen3People() {
         <label>Clients</label>
         {repeatable(bundle.clients, 'clients', [
           { name: 'name', placeholder: 'Name' },
-          { name: 'status', placeholder: 'Status (LIVE / DELIVERED / etc.)' },
+          { name: 'status', placeholder: 'e.g. active, finished, on hold' },
         ])}
       </div>
 
       <div className="field">
-        <label>Mentors / network</label>
+        <label>Mentors and network</label>
         {repeatable(bundle.mentors, 'mentors', [
           { name: 'name', placeholder: 'Name' },
-          { name: 'relationship', placeholder: 'Relationship' },
+          { name: 'relationship', placeholder: 'How you know them' },
         ])}
       </div>
 

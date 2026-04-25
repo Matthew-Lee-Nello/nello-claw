@@ -3,7 +3,7 @@
 import { useWizard } from '@/lib/store'
 import NavButtons from '@/components/NavButtons'
 
-const TOOL_SUGGESTIONS = ['GHL', 'Notion', 'HubSpot', 'Airtable', 'Figma', 'Zapier', 'Make', 'n8n', 'Linear', 'Slack']
+const TOOL_SUGGESTIONS = ['Gmail', 'Google Drive', 'Calendar', 'Slack', 'Notion', 'HubSpot', 'Airtable', 'Figma', 'Zapier', 'Linear']
 
 export default function Screen2Work() {
   const { bundle, update } = useWizard()
@@ -21,46 +21,46 @@ export default function Screen2Work() {
 
   return (
     <div className="screen">
-      <h2>2. Work</h2>
-      <p className="intro">What you actually do. Claude uses this to answer questions without asking every time.</p>
+      <h2>2. What you do</h2>
+      <p className="intro">Your assistant uses this to answer questions about your work without having to ask every time.</p>
 
       <div className="row">
         <div className="field">
-          <label>Role / title</label>
-          <input value={bundle.role} onChange={e => update({ role: e.target.value })} placeholder="Founder" />
+          <label>Your role</label>
+          <input value={bundle.role} onChange={e => update({ role: e.target.value })} placeholder="e.g. Founder, Sales Lead, Operator" />
         </div>
         <div className="field">
-          <label>Company (or "solo")</label>
+          <label>Your business (or "solo")</label>
           <input value={bundle.company} onChange={e => update({ company: e.target.value })} />
         </div>
       </div>
 
       <div className="field">
-        <label>Industry</label>
-        <input value={bundle.industry} onChange={e => update({ industry: e.target.value })} />
+        <label>What industry are you in?</label>
+        <input value={bundle.industry} onChange={e => update({ industry: e.target.value })} placeholder="e.g. property, e-commerce, agency" />
       </div>
 
       <div className="field">
-        <label>Active projects (up to 5)</label>
+        <label>What you are working on right now (up to 5)</label>
         {bundle.projects.map((p, i) => (
           <div className="repeatable" key={i}>
             <div className="row">
-              <input value={p.name} onChange={e => updateProject(i, { name: e.target.value })} placeholder="Project name" />
-              <input value={p.description} onChange={e => updateProject(i, { description: e.target.value })} placeholder="One-line description" />
+              <input value={p.name} onChange={e => updateProject(i, { name: e.target.value })} placeholder="Name of the project" />
+              <input value={p.description} onChange={e => updateProject(i, { description: e.target.value })} placeholder="One line about it" />
             </div>
             <button className="secondary" onClick={() => removeProject(i)}>Remove</button>
           </div>
         ))}
-        {bundle.projects.length < 5 && <button className="secondary" onClick={addProject}>+ Add project</button>}
+        {bundle.projects.length < 5 && <button className="secondary" onClick={addProject}>+ Add</button>}
       </div>
 
       <div className="field">
-        <label>Target customer</label>
-        <input value={bundle.targetCustomer} onChange={e => update({ targetCustomer: e.target.value })} placeholder="Business owners, founders, operators" />
+        <label>Who you serve</label>
+        <input value={bundle.targetCustomer} onChange={e => update({ targetCustomer: e.target.value })} placeholder="e.g. small business owners, founders, real estate agents" />
       </div>
 
       <div className="field">
-        <label>Tools you use</label>
+        <label>Day-to-day apps you use</label>
         <div className="chips">
           {TOOL_SUGGESTIONS.map(t => (
             <div key={t} className={`chip ${bundle.tools.includes(t) ? 'on' : ''}`} onClick={() => toggleTool(t)}>{t}</div>

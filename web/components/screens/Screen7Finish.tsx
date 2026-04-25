@@ -1,24 +1,24 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useWizard } from '@/lib/store'
-import NavButtons from '@/components/NavButtons'
 
 const PASTE_PROMPT = `Install nello-claw. My bundle is at ~/Downloads/nello-claw-bundle.json. Read https://raw.githubusercontent.com/Matthew-Lee-Nello/nello-claw/main/INSTALL_GUIDE.md and follow every step. Ask me for confirmation before anything destructive.`
 
-const OPTIONAL_SKILLS = [
-  { id: 'mcp-builder',        label: 'mcp-builder',        desc: 'Guide for writing new MCP servers' },
-  { id: 'mcp-implement',      label: 'mcp-implement',      desc: 'Wire existing MCPs into your config' },
-  { id: 'process-transcript', label: 'process-transcript', desc: 'Turn a transcript into vault notes' },
-  { id: 'process-calls',      label: 'process-calls',      desc: 'Turn a call recording into vault notes' },
+const EXTRA_ABILITIES = [
+  { id: 'mcp-builder',        label: 'Help me build new connections',           desc: 'Walks you through plugging in any new service.' },
+  { id: 'mcp-implement',      label: 'Help me wire connections I find',         desc: 'Set up someone else\'s connection in under a minute.' },
+  { id: 'process-transcript', label: 'Turn meeting transcripts into notes',     desc: 'Drop in a transcript, get back tidy notes + action items.' },
+  { id: 'process-calls',      label: 'Turn call recordings into notes',         desc: 'Drop in audio or video, get back transcript + summary + actions.' },
 ]
 
 export default function Screen7Finish() {
   const { bundle, update } = useWizard()
   const [compiling, setCompiling] = useState(false)
   const [token, setToken] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
 
-  const toggleOptionalSkill = (id: string) => {
+  const toggleAbility = (id: string) => {
     const list = bundle.optionalSkills
     update({ optionalSkills: list.includes(id) ? list.filter(x => x !== id) : [...list, id] })
   }
@@ -46,36 +46,45 @@ export default function Screen7Finish() {
     }
   }
 
+  const copy = async () => {
+    await navigator.clipboard.writeText(PASTE_PROMPT)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
     <div className="screen">
-      <h2>7. Surfaces & Finish</h2>
-      <p className="intro">Last pass. Pick what surfaces you want installed, enable autostart, then compile.</p>
+      <h2>7. Last bits</h2>
+      <p className="intro">A few choices about how your assistant runs, then we hand you the install command.</p>
 
       <div className="field">
         <label>
           <input type="checkbox" checked={bundle.installTelegram} onChange={e => update({ installTelegram: e.target.checked })} />
-          {' '}Install Telegram bot daemon
+          {' '}Text and voice your assistant from Telegram
         </label>
+        <div className="panel-help">Send a message from anywhere, get an answer back. Works while you are away from your computer.</div>
       </div>
 
       <div className="field">
         <label>
           <input type="checkbox" checked={bundle.installDashboard} onChange={e => update({ installDashboard: e.target.checked })} />
-          {' '}Install web dashboard at localhost:3000 (bypass permissions)
+          {' '}Personal chat hub on your Mac
         </label>
+        <div className="panel-help">Your own private chat window at <code>localhost:3000</code>. No prompts, no permission walls - your assistant just does what you ask.</div>
       </div>
 
       <div className="field">
         <label>
           <input type="checkbox" checked={bundle.installLaunchAgent} onChange={e => update({ installLaunchAgent: e.target.checked })} />
-          {' '}Auto-start on login (LaunchAgent on macOS)
+          {' '}Auto-start when I turn on my Mac
         </label>
+        <div className="panel-help">Your assistant boots up automatically. Always ready.</div>
       </div>
 
       <div className="field">
         <label>
           <input type="checkbox" checked={bundle.enableMorningBrief} onChange={e => update({ enableMorningBrief: e.target.checked })} />
-          {' '}Daily morning brief at 09:00 local
+          {' '}Morning briefing every day at 9am
         </label>
         {bundle.enableMorningBrief && (
           <>
@@ -83,6 +92,7 @@ export default function Screen7Finish() {
               value={bundle.morningBriefPrompt}
               onChange={e => update({ morningBriefPrompt: e.target.value })}
               style={{ marginTop: 8 }}
+              placeholder="What you want your assistant to brief you on each morning"
             />
             <input
               value={bundle.morningBriefCron}
@@ -90,24 +100,26 @@ export default function Screen7Finish() {
               style={{ marginTop: 8 }}
               placeholder="0 9 * * *"
             />
+            <div className="panel-help">Default is 9am local time. The format above is cron - leave it as is unless you know what you are doing.</div>
           </>
         )}
       </div>
 
       <div className="field">
-        <label>Voice source</label>
+        <label>Voice</label>
         <select value={bundle.voiceSource} onChange={e => update({ voiceSource: e.target.value as any })}>
-          <option value="online">Online (Groq STT + ElevenLabs TTS)</option>
-          <option value="local">Local (mlx-whisper + Piper, no API cost)</option>
-          <option value="off">Off</option>
+          <option value="online">Online (free, fast, needs Groq key)</option>
+          <option value="local">Local (no internet needed, free forever)</option>
+          <option value="off">Voice off</option>
         </select>
+        <div className="panel-help">How your assistant understands voice notes. Online is easier, local is fully private.</div>
       </div>
 
       <div className="field">
-        <label>Optional skills to add on top of the default pack</label>
-        {OPTIONAL_SKILLS.map(s => (
-          <label key={s.id} style={{ display: 'block', margin: '6px 0' }}>
-            <input type="checkbox" checked={bundle.optionalSkills.includes(s.id)} onChange={() => toggleOptionalSkill(s.id)} />
+        <label>Extra abilities (optional)</label>
+        {EXTRA_ABILITIES.map(s => (
+          <label key={s.id} style={{ display: 'block', margin: '8px 0' }}>
+            <input type="checkbox" checked={bundle.optionalSkills.includes(s.id)} onChange={() => toggleAbility(s.id)} />
             {' '}{s.label} <span style={{ color: 'var(--muted)', fontSize: 12 }}>- {s.desc}</span>
           </label>
         ))}
@@ -116,29 +128,32 @@ export default function Screen7Finish() {
       <div className="nav-buttons">
         <button className="secondary" onClick={() => window.history.back()}>Back</button>
         <button onClick={compileAndDownload} disabled={compiling}>
-          {compiling ? 'Compiling…' : 'Build My Brain'}
+          {compiling ? 'Building...' : 'Build my assistant'}
         </button>
       </div>
 
       {token && (
         <div style={{ marginTop: 32 }}>
-          <h3>Install it</h3>
-          <p>Bundle downloaded to <code>~/Downloads/nello-claw-bundle.json</code>. Open Claude Code and paste:</p>
+          <h3>Last step</h3>
+          <p>
+            We have downloaded your setup to <code>~/Downloads/nello-claw-bundle.json</code>.
+            Open Claude Code and paste this:
+          </p>
           <div
             className="install-command"
-            onClick={() => { navigator.clipboard.writeText(PASTE_PROMPT) }}
+            onClick={copy}
             title="Click to copy"
             style={{ cursor: 'pointer' }}
           >
             {PASTE_PROMPT}
           </div>
-          <p style={{ color: 'var(--muted)', fontSize: 13 }}>
-            Claude reads the install guide from GitHub, clones the repo, runs the bootstrap,
-            wires Telegram + dashboard + LaunchAgent, and confirms it's all green.
-            Your keys never uploaded anywhere - they stayed on your machine.
+          <button onClick={copy}>{copied ? 'Copied' : 'Copy to clipboard'}</button>
+          <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 16 }}>
+            Your assistant will read the install steps, set everything up, ask you for the
+            Telegram chat ID once, and confirm everything is running. Takes about five minutes.
           </p>
           <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 12 }}>
-            Prefer Terminal bash one-liner instead? <code>curl -fsSL https://labs.nello.gg/i/{token} | bash</code>
+            Your keys never went anywhere. They are on your machine, in a file only you can read.
           </p>
         </div>
       )}

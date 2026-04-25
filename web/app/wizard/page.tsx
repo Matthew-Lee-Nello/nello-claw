@@ -11,13 +11,13 @@ import Screen6Keys from '@/components/screens/Screen6Keys'
 import Screen7Finish from '@/components/screens/Screen7Finish'
 
 const LABELS: Record<Screen, string> = {
-  1: 'Identity',
-  2: 'Work',
-  3: 'People',
-  4: 'Vault',
-  5: 'Voice',
-  6: 'Keys + MCPs',
-  7: 'Finish',
+  1: 'About you',
+  2: 'Your work',
+  3: 'Your people',
+  4: 'Your notes',
+  5: 'How they sound',
+  6: 'Connections',
+  7: 'Last bits',
 }
 
 export default function WizardPage() {

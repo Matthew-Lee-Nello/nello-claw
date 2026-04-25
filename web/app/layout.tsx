@@ -10,8 +10,8 @@ const figtree = Figtree({
 })
 
 export const metadata: Metadata = {
-  title: 'nello-claw - Brain Method setup',
-  description: 'Compile your personalised Claude Code stack in the browser. No keys ever leave your machine.',
+  title: 'nello-claw - Your AI executive assistant',
+  description: 'An AI assistant who knows everything about you, runs on your Mac, and just does the work. Setup takes 10 minutes. Your keys stay on your machine.',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

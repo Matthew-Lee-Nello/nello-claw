@@ -8,66 +8,67 @@ interface KeyField {
   label: string
   required?: boolean
   help: string
-  getUrl?: string
   type?: 'text' | 'password'
 }
 
 const KEYS: KeyField[] = [
-  { name: 'TELEGRAM_BOT_TOKEN', label: 'Telegram bot token', required: true, help: 'Open @BotFather in Telegram, type /newbot, follow prompts. Step-by-step at /docs/telegram.', type: 'password' },
-  { name: 'GROQ_API_KEY', label: 'Groq API key (voice transcription)', help: 'Free tier at console.groq.com. Step-by-step at /docs/groq.', type: 'password' },
-  { name: 'GOOGLE_OAUTH_CLIENT_ID', label: 'Google OAuth client ID', help: 'For Gmail / Drive / Docs / Sheets / Calendar. Step-by-step at /docs/google.', type: 'password' },
-  { name: 'GOOGLE_OAUTH_CLIENT_SECRET', label: 'Google OAuth client secret', help: 'Same place as the client ID. Step-by-step at /docs/google.', type: 'password' },
-  { name: 'GOOGLE_USER_EMAIL', label: 'Google email to authenticate', help: 'The Google account whose Gmail / Drive / Calendar you want Claude to use.' },
-  { name: 'TAVILY_API_KEY', label: 'Tavily API key', help: 'For research skill. Step-by-step at /docs/tavily.', type: 'password' },
-  { name: 'EXA_API_KEY', label: 'Exa API key', help: 'For research skill. Step-by-step at /docs/exa.', type: 'password' },
-  { name: 'FIRECRAWL_API_KEY', label: 'Firecrawl API key', help: 'For research + scraping skill. Step-by-step at /docs/firecrawl.', type: 'password' },
-  { name: 'APIFY_TOKEN', label: 'Apify token (optional)', help: 'For Instagram + scraper actors. Skip if you do not use them.', type: 'password' },
+  { name: 'TELEGRAM_BOT_TOKEN', label: 'Telegram bot key (so your assistant can text you)', required: true, help: 'You create a free bot in 60 seconds. Step-by-step at /docs/telegram.', type: 'password' },
+  { name: 'GROQ_API_KEY', label: 'Groq key (so your assistant can hear voice notes)', help: 'Free. You only need this if you want to send voice notes. Step-by-step at /docs/groq.', type: 'password' },
+  { name: 'GOOGLE_OAUTH_CLIENT_ID', label: 'Google connection ID', help: 'For Gmail, Drive, Docs, Sheets, Calendar. Free. Step-by-step at /docs/google.', type: 'password' },
+  { name: 'GOOGLE_OAUTH_CLIENT_SECRET', label: 'Google connection secret', help: 'You get this in the same place as the ID. Step-by-step at /docs/google.', type: 'password' },
+  { name: 'GOOGLE_USER_EMAIL', label: 'Your Google email', help: 'The Google account you want your assistant to read and write from.' },
+  { name: 'TAVILY_API_KEY', label: 'Tavily key (for live web research)', help: 'Free tier. Step-by-step at /docs/tavily.', type: 'password' },
+  { name: 'EXA_API_KEY', label: 'Exa key (for live web research)', help: 'Free tier. Step-by-step at /docs/exa.', type: 'password' },
+  { name: 'FIRECRAWL_API_KEY', label: 'Firecrawl key (for reading any website)', help: 'Free tier. Step-by-step at /docs/firecrawl.', type: 'password' },
+  { name: 'APIFY_TOKEN', label: 'Apify key (optional, for Instagram and scraping)', help: 'Skip if you do not need it.', type: 'password' },
 ]
 
-const MCP_TOGGLES: Array<{ key: keyof import('@/lib/types').Bundle['mcps']; label: string; help: string }> = [
-  { key: 'google',    label: 'Google Workspace MCP', help: 'Gmail, Drive, Docs, Sheets, Calendar. Needs OAuth keys above.' },
-  { key: 'obsidian',  label: 'Obsidian MCP',         help: 'Claude can edit your vault files directly.' },
-  { key: 'tavily',    label: 'Tavily MCP',           help: 'Research via Tavily. Needs TAVILY_API_KEY.' },
-  { key: 'exa',       label: 'Exa MCP',              help: 'Research via Exa. Needs EXA_API_KEY.' },
-  { key: 'firecrawl', label: 'Firecrawl MCP',        help: 'Scraping + research. Needs FIRECRAWL_API_KEY.' },
-  { key: 'gitnexus',  label: 'gitnexus MCP',         help: 'Local code indexing and navigation. No key.' },
-  { key: 'apify',     label: 'Apify MCP',            help: 'Access to the Apify actor marketplace. Needs APIFY_TOKEN.' },
-  { key: 'n8n',       label: 'n8n MCP',              help: 'Control your n8n instance. Set N8N_API_URL + N8N_API_KEY in .env after install.' },
+const CONNECTIONS: Array<{ key: keyof import('@/lib/types').Bundle['mcps']; label: string; help: string }> = [
+  { key: 'google',    label: 'Google Workspace', help: 'Gmail, Drive, Docs, Sheets, Calendar. Needs the Google connection above.' },
+  { key: 'obsidian',  label: 'Notes folder', help: 'Lets your assistant edit your notes directly.' },
+  { key: 'tavily',    label: 'Web research (Tavily)', help: 'Needs Tavily key.' },
+  { key: 'exa',       label: 'Web research (Exa)', help: 'Needs Exa key.' },
+  { key: 'firecrawl', label: 'Read any website (Firecrawl)', help: 'Needs Firecrawl key.' },
+  { key: 'gitnexus',  label: 'Code understanding', help: 'For developers. Indexes your local code so your assistant can navigate it. No key needed.' },
+  { key: 'apify',     label: 'Instagram + scraping (Apify)', help: 'For pulling content from social media. Needs Apify key.' },
+  { key: 'n8n',       label: 'n8n workflows', help: 'If you run n8n. Add your n8n details to .env after install.' },
 ]
 
 export default function Screen6Keys() {
   const { bundle, update } = useWizard()
 
   const setKey = (k: string, v: string) => update({ keys: { ...bundle.keys, [k]: v } })
-  const toggleMcp = (k: keyof typeof bundle.mcps) => update({ mcps: { ...bundle.mcps, [k]: !bundle.mcps[k] } })
+  const toggleConnection = (k: keyof typeof bundle.mcps) => update({ mcps: { ...bundle.mcps, [k]: !bundle.mcps[k] } })
 
   return (
     <div className="screen">
-      <h2>6. Keys + MCPs</h2>
+      <h2>6. Connect your accounts</h2>
       <p className="intro">
-        You already have Claude Code running, so no Anthropic key is needed.
-        Paste API keys for the services you want and pick which MCPs to wire.
-        Keys are compiled into your bundle in this browser and never hit our server.
+        Paste in the keys for the services you want your assistant to use. Skip the ones you do not.
+        Keys stay on your computer - they never get sent to us.
       </p>
 
       {KEYS.map(k => (
         <div className="field" key={k.name}>
-          <label>{k.label} {k.required && <span style={{ color: 'var(--red)' }}>*</span>}</label>
+          <label>{k.label} {k.required && <span style={{ color: 'var(--accent)' }}>*</span>}</label>
           <input
             type={k.type ?? 'text'}
             value={bundle.keys[k.name] ?? ''}
             onChange={e => setKey(k.name, e.target.value)}
-            placeholder={k.required ? 'Required' : 'Optional'}
+            placeholder={k.required ? 'Required' : 'Skip if you do not need this'}
           />
           <div className="panel-help">{k.help}</div>
         </div>
       ))}
 
-      <h3 style={{ marginTop: 32, marginBottom: 16 }}>MCPs to install</h3>
-      {MCP_TOGGLES.map(m => (
+      <h3 style={{ marginTop: 40, marginBottom: 16 }}>What can your assistant access?</h3>
+      <p style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 20 }}>
+        Tick anything you want your assistant to be able to do. Each one needs the matching key above.
+      </p>
+      {CONNECTIONS.map(m => (
         <div className="field" key={m.key}>
           <label>
-            <input type="checkbox" checked={!!bundle.mcps[m.key]} onChange={() => toggleMcp(m.key)} />
+            <input type="checkbox" checked={!!bundle.mcps[m.key]} onChange={() => toggleConnection(m.key)} />
             {' '}{m.label}
           </label>
           <div className="panel-help">{m.help}</div>
