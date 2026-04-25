@@ -2,7 +2,10 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { COURSE, Block } from '@/lib/course-content'
+import { COURSE as FULL_COURSE, Block } from '@/lib/course-content'
+
+const SETUP_MODULE_IDS = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8']
+const COURSE = FULL_COURSE.filter(m => SETUP_MODULE_IDS.includes(m.id))
 
 export default function SetupPage() {
   const [openModule, setOpenModule] = useState<string | null>(COURSE[0]?.id ?? null)
