@@ -1,25 +1,6 @@
-'use client'
-
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { useWizard } from '@/lib/store'
-import type { Platform } from '@/lib/types'
 
 export default function Landing() {
-  const { update } = useWizard()
-  const [detected, setDetected] = useState<Platform>('mac')
-
-  useEffect(() => {
-    const ua = navigator.userAgent.toLowerCase()
-    const p: Platform = ua.includes('mac') ? 'mac' : ua.includes('win') ? 'windows' : 'linux'
-    setDetected(p)
-    update({ platform: p })
-  }, [update])
-
-  const pick = (p: Platform) => {
-    update({ platform: p })
-  }
-
   return (
     <div className="hero">
       <h1><span>nello-claw</span></h1>
@@ -45,19 +26,25 @@ export default function Landing() {
         and conversations stay on your machine - never on our servers.
       </p>
 
-      <h2 style={{ fontSize: 16, color: 'var(--muted)', marginTop: 40, marginBottom: 12, fontWeight: 500 }}>
-        Pick your computer ({detected === 'mac' ? 'we think you are on Mac' : detected === 'windows' ? 'we think you are on Windows' : 'we think you are on Linux'})
-      </h2>
-      <div className="cta">
-        <Link href="/wizard" onClick={() => pick('mac')}>
-          <button>Set up on Mac</button>
-        </Link>
-        <Link href="/wizard" onClick={() => pick('windows')}>
-          <button className="secondary">Set up on Windows</button>
-        </Link>
+      <div style={{
+        marginTop: 32,
+        padding: 16,
+        border: '1px solid var(--accent)',
+        borderRadius: 8,
+        background: 'var(--accent-dim)',
+      }}>
+        <strong style={{ color: 'var(--accent)' }}>Before you start</strong>
+        <p style={{ margin: '8px 0 0', fontSize: 14 }}>
+          You need <a href="https://claude.com/product/claude-code" target="_blank" rel="noopener">Claude Code</a> installed and signed in first.
+          Works on Mac, Windows and Linux. Free with any Claude.ai plan.
+        </p>
+        <p style={{ margin: '12px 0 0', fontSize: 13, color: 'var(--muted)' }}>
+          <strong style={{ color: 'var(--text)' }}>Tip:</strong> when you paste the install command, hit <kbd style={{ background: 'var(--bg)', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--border)' }}>Shift+Tab</kbd> twice in Claude Code to switch on <strong>Plan Mode</strong>. Your assistant will lay out exactly what it is about to do before touching anything. Approve, then it runs.
+        </p>
       </div>
 
-      <div style={{ marginTop: 32 }}>
+      <div className="cta" style={{ marginTop: 32 }}>
+        <Link href="/wizard"><button>Set up my assistant</button></Link>
         <Link href="/audit"><button className="secondary">I already have a setup</button></Link>
       </div>
 

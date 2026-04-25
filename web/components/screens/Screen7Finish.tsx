@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { useWizard } from '@/lib/store'
 
-const MAC_ONELINER = 'curl -fsSL https://labs.nello.gg/i/mac | bash'
-const WIN_ONELINER = 'irm https://labs.nello.gg/i/win | iex'
+const PASTE_PROMPT = `Install nello-claw. My bundle is at ~/Downloads/nello-claw-bundle.json. Read https://raw.githubusercontent.com/Matthew-Lee-Nello/nello-claw/main/INSTALL_GUIDE.md and follow every step. Adapt commands for my OS (Mac, Windows or Linux). Ask me before anything destructive.`
 
-const FALLBACK_PROMPT = `Install nello-claw. My bundle is at ~/Downloads/nello-claw-bundle.json. Read https://raw.githubusercontent.com/Matthew-Lee-Nello/nello-claw/main/INSTALL_GUIDE.md and follow every step.`
+const MAC_FALLBACK = 'curl -fsSL https://labs.nello.gg/i/mac | bash'
+const WIN_FALLBACK = 'irm https://labs.nello.gg/i/win | iex'
 
 const EXTRA_ABILITIES = [
   { id: 'mcp-builder',        label: 'Help me build new connections',           desc: 'Walks you through plugging in any new service.' },
@@ -130,48 +130,56 @@ export default function Screen7Finish() {
         </button>
       </div>
 
-      {token && (() => {
-        const isWin = bundle.platform === 'windows'
-        const oneliner = isWin ? WIN_ONELINER : MAC_ONELINER
-        const terminalName = isWin ? 'PowerShell' : 'Terminal'
-        const terminalHint = isWin
-          ? 'Press the Windows key, type "PowerShell", hit Enter.'
-          : 'Press Cmd+Space, type "Terminal", hit Enter.'
+      {token && (
+        <div style={{ marginTop: 32 }}>
+          <h3>Last step</h3>
+          <p>
+            Your setup downloaded to <code>~/Downloads/nello-claw-bundle.json</code>.
+            Open Claude Code and paste this:
+          </p>
 
-        return (
-          <div style={{ marginTop: 32 }}>
-            <h3>Last step</h3>
-            <p>
-              Your setup downloaded to <code>~/Downloads/nello-claw-bundle.json</code>.
-              Open <strong>{terminalName}</strong> and paste this one line:
-            </p>
-            <div
-              className="install-command"
-              onClick={() => { navigator.clipboard.writeText(oneliner); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
-              title="Click to copy"
-              style={{ cursor: 'pointer' }}
-            >
-              {oneliner}
-            </div>
-            <button onClick={() => { navigator.clipboard.writeText(oneliner); setCopied(true); setTimeout(() => setCopied(false), 2000) }}>
-              {copied ? 'Copied' : 'Copy to clipboard'}
-            </button>
-            <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 16 }}>
-              {terminalHint} Paste, hit Enter, type your password once when asked.
-              The installer auto-installs anything you are missing (Node, Git, etc),
-              sets everything up, and opens your dashboard. About 5 minutes.
-            </p>
-            <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 12 }}>
-              When the dashboard opens, send a message to your Telegram bot to finish.
-              That last step links your phone to your assistant.
-            </p>
-            <p style={{ color: 'var(--muted)', fontSize: 12, marginTop: 24 }}>
-              Already have Claude Code installed? You can paste this prompt instead:{' '}
-              <code style={{ wordBreak: 'break-all' }}>{FALLBACK_PROMPT}</code>
-            </p>
+          <div style={{
+            margin: '12px 0',
+            padding: 12,
+            border: '1px solid var(--accent)',
+            borderRadius: 8,
+            background: 'var(--accent-dim)',
+            fontSize: 13,
+          }}>
+            <strong style={{ color: 'var(--accent)' }}>Tip:</strong> hit{' '}
+            <kbd style={{ background: 'var(--bg)', padding: '2px 6px', borderRadius: 4, border: '1px solid var(--border)' }}>Shift+Tab</kbd>{' '}twice in Claude Code first to switch on <strong>Plan Mode</strong>.
+            Your assistant will write out exactly what it is about to do before doing anything. Approve, then it runs.
           </div>
-        )
-      })()}
+
+          <div
+            className="install-command"
+            onClick={() => { navigator.clipboard.writeText(PASTE_PROMPT); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+            title="Click to copy"
+            style={{ cursor: 'pointer' }}
+          >
+            {PASTE_PROMPT}
+          </div>
+          <button onClick={() => { navigator.clipboard.writeText(PASTE_PROMPT); setCopied(true); setTimeout(() => setCopied(false), 2000) }}>
+            {copied ? 'Copied' : 'Copy to clipboard'}
+          </button>
+
+          <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 16 }}>
+            Your assistant clones the repo, builds, configures everything, and opens the dashboard.
+            About 5 minutes. Works on Mac, Windows and Linux.
+          </p>
+          <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 12 }}>
+            When the dashboard opens, send a message to your Telegram bot to finish.
+            That last step links your phone to your assistant.
+          </p>
+
+          <p style={{ color: 'var(--muted)', fontSize: 12, marginTop: 32 }}>
+            Don&apos;t have Claude Code yet?{' '}
+            <a href="https://claude.com/product/claude-code" target="_blank" rel="noopener">Install it first</a>{' '}
+            then come back here. Or use the bash one-liner fallback:{' '}
+            <code style={{ wordBreak: 'break-all' }}>{bundle.platform === 'windows' ? WIN_FALLBACK : MAC_FALLBACK}</code>
+          </p>
+        </div>
+      )}
     </div>
   )
 }
