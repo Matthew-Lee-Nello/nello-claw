@@ -1,14 +1,35 @@
 import React, { useState } from 'react'
 import { COURSE, Module, Lesson } from '../course-content'
 
+// Dashboard is loaded AFTER install completes. M1-M4 (install wizard, keys, paste prompt)
+// are pre-install lessons - already done by the time the user sees this. Default to M5
+// "Connect your phone" since that is the first post-install action they need to take.
+const POST_INSTALL_START_MODULE = 'm5'
+const POST_INSTALL_START_LESSON = 'm5-l1'
+
 export default function Courses() {
-  const [openModule, setOpenModule] = useState<string | null>(COURSE[0]?.id ?? null)
-  const [openLesson, setOpenLesson] = useState<string | null>(COURSE[0]?.lessons[0]?.id ?? null)
   const [completed, setCompleted] = useState<Set<string>>(() => {
     if (typeof window === 'undefined') return new Set()
     try { return new Set(JSON.parse(localStorage.getItem('nc-completed-lessons') || '[]')) }
     catch { return new Set() }
   })
+
+  // First incomplete lesson, OR the post-install start point if nothing done yet.
+  function firstIncomplete(done: Set<string>): { module: string; lesson: string } {
+    // If user has not started M5 yet, jump to it (skip the pre-install modules they already did)
+    const startIdx = COURSE.findIndex(m => m.id === POST_INSTALL_START_MODULE)
+    if (startIdx >= 0) {
+      for (let i = startIdx; i < COURSE.length; i++) {
+        const mod = COURSE[i]
+        for (const l of mod.lessons) if (!done.has(l.id)) return { module: mod.id, lesson: l.id }
+      }
+    }
+    return { module: POST_INSTALL_START_MODULE, lesson: POST_INSTALL_START_LESSON }
+  }
+
+  const start = firstIncomplete(completed)
+  const [openModule, setOpenModule] = useState<string | null>(start.module)
+  const [openLesson, setOpenLesson] = useState<string | null>(start.lesson)
 
   const toggleComplete = (id: string) => {
     setCompleted(prev => {
@@ -26,7 +47,12 @@ export default function Courses() {
   return (
     <div className="page courses">
       <div className="course-header">
-        <h2>Course</h2>
+        <div>
+          <h2>Welcome to your Command Centre</h2>
+          <p style={{ margin: '4px 0 0', color: 'var(--muted)', fontSize: 13 }}>
+            Your assistant is running. Tick lessons off as you go - your progress is saved.
+          </p>
+        </div>
         <div className="course-progress">
           <div className="progress-bar">
             <div className="progress-fill" style={{ width: `${pct}%` }} />
