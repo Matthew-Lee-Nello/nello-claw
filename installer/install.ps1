@@ -19,7 +19,8 @@ function Ok($m)   { Write-Host "  ${Accent}OK${Reset} $m" }
 function Warn($m) { Write-Host "  ${Accent}!${Reset} $m" }
 function Fail($m) { Write-Host "  ${Red}X${Reset} $m"; exit 1 }
 
-$InstallPath = if ($env:NC_INSTALL_PATH) { $env:NC_INSTALL_PATH } else { Join-Path $HOME "nello-claw" }
+# Install into the folder the user is currently in (override via NC_INSTALL_PATH env var).
+$InstallPath = if ($env:NC_INSTALL_PATH) { $env:NC_INSTALL_PATH } else { (Get-Location).Path }
 $TemplateRef = if ($env:NC_TEMPLATE_REF) { $env:NC_TEMPLATE_REF } else { "main" }
 $TemplateRepo = "https://github.com/Matthew-Lee-Nello/nello-claw.git"
 $LogFile = Join-Path $InstallPath "install.log"
@@ -28,6 +29,14 @@ Write-Host ""
 Write-Host "${Accent}nello-claw installer${Reset}"
 Write-Host "${Dim}install path: $InstallPath${Reset}"
 Write-Host ""
+
+# Refuse to install into a folder that already has unrelated files
+if ((Test-Path $InstallPath) -and -not (Test-Path (Join-Path $InstallPath ".git"))) {
+  $existing = Get-ChildItem -Path $InstallPath -Force | Where-Object { $_.Name -notmatch '^\.' -and $_.Name -ne 'bundle.json' -and $_.Name -ne 'install.log' }
+  if ($existing.Count -gt 0) {
+    Fail "Folder $InstallPath already has files. Make a fresh empty folder, cd into it, then rerun."
+  }
+}
 
 New-Item -ItemType Directory -Force -Path $InstallPath | Out-Null
 Start-Transcript -Path $LogFile -Force | Out-Null
@@ -126,6 +135,10 @@ if (-not (Test-Path $chromePath)) { $chromePath = "$env:LOCALAPPDATA\Google\Chro
 if (-not (Test-Path $chromePath)) { $chromePath = "$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe" }
 if (-not (Test-Path $chromePath)) { $chromePath = $null }
 
+# Use bundled .ico from cloned repo for the shortcut icon
+$icoPath = Join-Path $InstallPath "installer\icon.ico"
+if (-not (Test-Path $icoPath)) { $icoPath = $null }
+
 foreach ($shortcutPath in @($startMenu, $desktop)) {
   $WshShell = New-Object -ComObject WScript.Shell
   $shortcut = $WshShell.CreateShortcut($shortcutPath)
@@ -135,7 +148,11 @@ foreach ($shortcutPath in @($startMenu, $desktop)) {
   } else {
     $shortcut.TargetPath = "http://localhost:3000"
   }
-  $shortcut.IconLocation = "$chromePath,0"
+  if ($icoPath) {
+    $shortcut.IconLocation = "$icoPath,0"
+  } elseif ($chromePath) {
+    $shortcut.IconLocation = "$chromePath,0"
+  }
   $shortcut.Description = "nello-claw - your AI executive assistant"
   $shortcut.Save()
 }

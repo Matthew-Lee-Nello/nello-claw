@@ -3,15 +3,17 @@
 import { useState } from 'react'
 import { useWizard } from '@/lib/store'
 
-const PASTE_PROMPT = `Please install nello-claw for me.
+const PASTE_PROMPT = `Please install nello-claw for me into the folder VS Code currently has open.
 
 The reference docs are at https://github.com/Matthew-Lee-Nello/nello-claw - read INSTALL_GUIDE.md and SECURITY.md so you know what the install does and does not do.
 
-The actual install steps are:
-1. git clone https://github.com/Matthew-Lee-Nello/nello-claw.git ~/nello-claw (or the equivalent on Windows)
-2. cd ~/nello-claw && pnpm install && pnpm -r --filter '!@nc/web' build
-3. cp ~/Downloads/nello-claw-bundle.json ~/nello-claw/bundle.json
-4. node ~/nello-claw/template/bootstrap.js
+The actual install steps:
+1. Confirm the current folder is empty (or only contains bundle.json). If not, stop and ask me to pick a fresh folder.
+2. git clone https://github.com/Matthew-Lee-Nello/nello-claw.git . (clone into current folder)
+3. pnpm install
+4. pnpm -r --filter '!@nc/web' build
+5. cp ~/Downloads/nello-claw-bundle.json ./bundle.json
+6. NC_INSTALL_PATH=$(pwd) node ./template/bootstrap.js
 
 Before running the bootstrap, summarise everything it will change on my system and let me approve. The bootstrap prints its own change summary too.
 

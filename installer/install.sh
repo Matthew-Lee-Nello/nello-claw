@@ -20,13 +20,25 @@ ok()  { printf "  ${ACCENT}✓${RESET} %s\n" "$1"; }
 warn() { printf "  ${ACCENT}!${RESET} %s\n" "$1"; }
 fail() { printf "  ${RED}✗${RESET} %s\n" "$1"; exit 1; }
 
-INSTALL_PATH="${NC_INSTALL_PATH:-$HOME/nello-claw}"
+# Install into whatever folder the user is currently in (so they pick the location
+# by cd'ing there before running). Override via NC_INSTALL_PATH env var.
+INSTALL_PATH="${NC_INSTALL_PATH:-$PWD}"
 TEMPLATE_REF="${NC_TEMPLATE_REF:-main}"
 TEMPLATE_REPO="https://github.com/Matthew-Lee-Nello/nello-claw.git"
 LOG_FILE="$INSTALL_PATH/install.log"
 
 printf "\n${ACCENT}nello-claw installer${RESET}\n"
 printf "${DIM}install path: %s${RESET}\n\n" "$INSTALL_PATH"
+
+# Refuse to install into a folder that already has unrelated files
+if [ -d "$INSTALL_PATH" ]; then
+  if [ ! -d "$INSTALL_PATH/.git" ]; then
+    NON_DOT_COUNT=$(ls -A "$INSTALL_PATH" 2>/dev/null | grep -v '^\.' | grep -v '^bundle.json$' | grep -v '^install.log$' | wc -l | tr -d ' ')
+    if [ "$NON_DOT_COUNT" -gt 0 ]; then
+      fail "Folder $INSTALL_PATH already has files. Make a fresh empty folder + cd there + rerun."
+    fi
+  fi
+fi
 
 mkdir -p "$INSTALL_PATH"
 exec > >(tee -a "$LOG_FILE") 2>&1
@@ -132,10 +144,15 @@ ok "build complete"
 # 9. Run bootstrap
 NC_INSTALL_PATH="$INSTALL_PATH" node "$INSTALL_PATH/template/bootstrap.js"
 
-# 10. Drop app-mode shortcut on Mac
+# 10. Drop app-mode shortcut on Mac (with icon)
 if [[ "$(uname)" == "Darwin" ]]; then
   APP_DIR="$HOME/Applications/nello-claw.app"
-  mkdir -p "$APP_DIR/Contents/MacOS"
+  mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
+
+  # Copy icon from cloned repo
+  if [ -f "$INSTALL_PATH/installer/icon.icns" ]; then
+    cp "$INSTALL_PATH/installer/icon.icns" "$APP_DIR/Contents/Resources/icon.icns"
+  fi
 
   cat > "$APP_DIR/Contents/MacOS/run" <<'LAUNCHER'
 #!/bin/bash
@@ -156,6 +173,7 @@ LAUNCHER
 <plist version="1.0">
 <dict>
   <key>CFBundleExecutable</key><string>run</string>
+  <key>CFBundleIconFile</key><string>icon</string>
   <key>CFBundleIdentifier</key><string>com.nello-claw.app</string>
   <key>CFBundleName</key><string>nello-claw</string>
   <key>CFBundleDisplayName</key><string>nello-claw</string>
@@ -172,6 +190,8 @@ fi
 say "opening dashboard"
 sleep 2
 if [[ "$(uname)" == "Darwin" ]]; then
+  # Touch the .app so Finder picks up the new icon
+  touch "$HOME/Applications/nello-claw.app" 2>/dev/null
   if [ -d "$HOME/Applications/nello-claw.app" ]; then
     open "$HOME/Applications/nello-claw.app"
   else

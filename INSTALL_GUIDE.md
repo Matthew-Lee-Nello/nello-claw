@@ -6,9 +6,15 @@ If you got here from the wizard at labs.nello.gg, the prompt you pasted into Cla
 
 > **Use Claude Code's Plan Mode** (Shift+Tab twice) when you paste the install prompt. Your assistant writes out the steps it intends to take. You read them. You approve, or you don't.
 
+## Where it installs
+
+Whatever folder you are currently in when you run the install command. So before you start: open VS Code, open the folder you want your assistant to live in (any name, any location - Desktop, Documents, etc), then run the install in that folder's Terminal.
+
+If you start the install in a folder that already has unrelated files, the installer refuses and tells you to pick a fresh empty folder.
+
 ## What gets installed
 
-Running the install creates one folder on your computer at `~/nello-claw/` containing:
+Running the install fills your chosen folder with:
 
 - `CLAUDE.md` - your assistant's persona, generated from your wizard answers
 - `.env` - your API keys (Telegram, Google, optional ones), permissions set so only you can read it
@@ -16,7 +22,7 @@ Running the install creates one folder on your computer at `~/nello-claw/` conta
 - `store/clawd.db` - SQLite database for memory, scheduled tasks, sessions
 - `node_modules/`, `dist/` - dependencies and compiled code
 - `.claude/settings.json` - **project-scoped** Claude Code settings (see "Security" below)
-- 7 abilities (skills) get symlinked into `~/.claude/skills/` so Claude Code can discover them when working in `~/nello-claw/`
+- 7 abilities (skills) get symlinked into `~/.claude/skills/` so Claude Code can discover them when working in `<install-folder>/`
 
 If you opted in:
 - A LaunchAgent (Mac) or Task Scheduler entry (Windows) or systemd user service (Linux) so the daemon starts on login
@@ -31,7 +37,7 @@ If you opted in:
 3. Sets `chmod 600` on `.env` so other users on your machine cannot read it
 4. Seeds your notes folder from the preset you picked
 5. Symlinks the 7 default abilities (skills) into `~/.claude/skills/`. If a skill with the same name already exists there, the existing one is renamed to `.bak-<timestamp>` first
-6. Writes a project-scoped `.claude/settings.json` inside `~/nello-claw/` with hooks + `bypassPermissions: true` for THAT project only
+6. Writes a project-scoped `.claude/settings.json` inside `<install-folder>/` with hooks + `bypassPermissions: true` for THAT project only
 7. Creates `store/`, `workspace/uploads/`, `memory/` directories
 8. If you opted into auto-start: registers the service via `launchctl` (Mac) / `schtasks` (Windows) / `systemctl --user` (Linux)
 9. If you opted into morning brief: seeds a scheduled task in the SQLite DB
@@ -45,21 +51,21 @@ Three things to know:
 
 **1. `bypassPermissions` is project-scoped, not global.**
 
-The setting goes in `~/nello-claw/.claude/settings.json`, not `~/.claude/settings.json`. It only applies when Claude Code is working inside the `~/nello-claw/` folder (which is where your assistant lives). Your other projects keep their normal Claude Code permission prompts.
+The setting goes in `<install-folder>/.claude/settings.json`, not `~/.claude/settings.json`. It only applies when Claude Code is working inside the `<install-folder>/` folder (which is where your assistant lives). Your other projects keep their normal Claude Code permission prompts.
 
 You can verify after install:
 ```
-cat ~/nello-claw/.claude/settings.json
+cat <install-folder>/.claude/settings.json
 cat ~/.claude/settings.json   # should be unchanged
 ```
 
-**2. Your API keys live on your computer in plaintext, in `~/nello-claw/.env`.**
+**2. Your API keys live on your computer in plaintext, in `<install-folder>/.env`.**
 
 This is the same trade-off every local AI tool makes (Ollama, LM Studio, etc). The file has `chmod 600` so only your user account can read it. Nobody at NELLO Labs sees your keys - the wizard at labs.nello.gg never receives them, the install bundle is downloaded directly to your machine.
 
-After install: delete `~/Downloads/nello-claw-bundle.json` yourself. The installer leaves it in place so you can verify it. The keys in there are duplicates of what got written to `~/nello-claw/.env`.
+After install: delete `~/Downloads/nello-claw-bundle.json` yourself. The installer leaves it in place so you can verify it. The keys in there are duplicates of what got written to `<install-folder>/.env`.
 
-**3. The skill symlinks point at files inside `~/nello-claw/template/skills/`.**
+**3. The skill symlinks point at files inside `<install-folder>/template/skills/`.**
 
 Those are open-source SKILL.md files in the public repo at github.com/Matthew-Lee-Nello/nello-claw. Read them before approving the install if you want to know what abilities your assistant gets:
 - [skills/karpathy-guidelines](template/skills/karpathy-guidelines/) - clean code reasoning
@@ -75,7 +81,7 @@ Those are open-source SKILL.md files in the public repo at github.com/Matthew-Le
 - It does not modify `~/.claude/settings.json` (your global Claude Code settings)
 - It does not upload anything to NELLO Labs servers
 - It does not phone home, send telemetry, or report usage
-- It does not modify any file outside `~/nello-claw/`, `~/.claude/skills/<symlinks>`, `~/Library/LaunchAgents/com.nello-claw.server.plist` (Mac), or the equivalents on Windows/Linux
+- It does not modify any file outside `<install-folder>/`, `~/.claude/skills/<symlinks>`, `~/Library/LaunchAgents/com.nello-claw.server.plist` (Mac), or the equivalents on Windows/Linux
 
 ## Roll back
 
@@ -83,7 +89,7 @@ To completely remove:
 ```bash
 # Mac
 launchctl bootout gui/$(id -u)/com.nello-claw.server
-rm -rf ~/nello-claw
+rm -rf <install-folder>
 rm -f ~/Library/LaunchAgents/com.nello-claw.server.plist
 # Skill symlinks (only the ones that point at nello-claw)
 find ~/.claude/skills -maxdepth 1 -type l -lname '*nello-claw*' -delete

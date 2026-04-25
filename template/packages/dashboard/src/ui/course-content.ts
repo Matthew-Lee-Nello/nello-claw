@@ -67,16 +67,17 @@ export const COURSE: Module[] = [
       {
         id: 'm1-l3', number: 3, title: 'Make your assistant a home', duration: '2 min',
         body: [
-          { type: 'p', text: 'Every assistant needs a folder to live in. We make one now.' },
+          { type: 'p', text: 'Pick where on your computer you want your assistant to live. Anywhere - Desktop, Documents, a dedicated folder, your call. The install will go INTO that folder.' },
           { type: 'h', text: 'Steps' },
           { type: 'ol', items: [
             'Open Finder (Mac) or File Explorer (Windows)',
-            'Go to your Home folder (Mac: Go menu → Home / Windows: This PC → C:\\Users\\YourName)',
-            'Right-click → New Folder → name it nello-claw. No capitals, no spaces.',
-            'Back in VS Code: File menu → Open Folder → pick the nello-claw folder',
+            'Go to where you want it (e.g. Documents, Desktop, or your home folder)',
+            'Right-click → New Folder → name it whatever you want (e.g. my-assistant, brain, claw). Avoid spaces.',
+            'Back in VS Code: File menu → Open Folder → pick the folder you just made',
             'VS Code asks "Do you trust the authors?" - Yes (you made it).',
           ]},
-          { type: 'callout', tone: 'tip', title: 'Done when:', text: 'VS Code window title says nello-claw' },
+          { type: 'callout', tone: 'tip', title: 'Done when:', text: 'VS Code window title shows your folder name' },
+          { type: 'callout', tone: 'info', title: 'Why this matters', text: 'When you run the install command later, it installs into whatever folder VS Code has open. So pick the right folder NOW.' },
         ],
       },
     ],
