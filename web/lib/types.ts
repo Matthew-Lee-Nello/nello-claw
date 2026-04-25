@@ -66,6 +66,11 @@ export interface Bundle {
   voiceSource: 'online' | 'local' | 'off'
   skillPack: string[]
   optionalSkills: string[]
+
+  // Platform pick (set on landing or auto-detected via UA)
+  platform: Platform
 }
 
 export type Screen = 1 | 2 | 3 | 4 | 5 | 6 | 7
+
+export type Platform = 'mac' | 'windows' | 'linux'

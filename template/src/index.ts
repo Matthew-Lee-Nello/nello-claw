@@ -6,7 +6,7 @@
 import { writeFileSync, existsSync, readFileSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 import { initDatabase, decayMemories, logger, PROJECT_ROOT, STORE_DIR, TELEGRAM_BOT_TOKEN, ALLOWED_CHAT_IDS } from '@nc/core'
-import { createBot } from '@nc/bot-telegram'
+import { createBot, discoverChatId } from '@nc/bot-telegram'
 import { initScheduler, stopScheduler } from '@nc/scheduler'
 import { startDashboard } from '@nc/dashboard/server'
 import * as voiceOnline from '@nc/voice-online'
@@ -46,9 +46,22 @@ async function main() {
   // Start dashboard
   const dashboard = startDashboard()
 
+  // Discovery mode: no chat ID yet → wait for first Telegram message, capture, restart.
+  if (TELEGRAM_BOT_TOKEN && ALLOWED_CHAT_IDS.length === 0) {
+    logger.info('chat ID missing - entering discovery mode')
+    const captured = await discoverChatId()
+    if (captured !== null) {
+      logger.info({ chatId: captured }, 'discovery complete - exiting for service restart')
+      releaseLock()
+      // Service manager (launchctl/schtasks/systemd) will relaunch us with new env
+      process.exit(0)
+    }
+    logger.warn('discovery timed out - continuing without chat ID, bot disabled')
+  }
+
   // Start bot if configured
   let bot: ReturnType<typeof createBot> | null = null
-  if (TELEGRAM_BOT_TOKEN) {
+  if (TELEGRAM_BOT_TOKEN && ALLOWED_CHAT_IDS.length > 0) {
     bot = createBot({
       transcribeAudio: voiceOnline.transcribeAudio,
       // TTS not wired in online mode. Install @nc/voice-local for Piper TTS.
@@ -64,7 +77,7 @@ async function main() {
       logger.error({ err }, 'bot.start failed')
     })
     logger.info({ chats: ALLOWED_CHAT_IDS.length }, 'Telegram bot started')
-  } else {
+  } else if (!TELEGRAM_BOT_TOKEN) {
     logger.warn('TELEGRAM_BOT_TOKEN missing - bot disabled, dashboard only')
   }
 

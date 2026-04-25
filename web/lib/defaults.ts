@@ -48,4 +48,5 @@ export const DEFAULT_BUNDLE: Bundle = {
     'vault-audit', 'update-config', 'fewer-permission-prompts',
   ],
   optionalSkills: [],
+  platform: 'mac',
 }

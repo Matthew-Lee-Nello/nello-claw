@@ -139,25 +139,17 @@ function mergeSettingsJson(ctx) {
   ok('merged ~/.claude/settings.json')
 }
 
-function installLaunchAgent(ctx) {
-  if (process.platform !== 'darwin') { warn('LaunchAgent skipped (not macOS)'); return }
-
-  const ctxWithLabel = { ...ctx, launchAgentLabel: LAUNCHAGENT_LABEL }
-  const plistPath = join(INSTALL_PATH, `${LAUNCHAGENT_LABEL}.plist`)
-  renderTemplate(join(TEMPLATE_DIR, 'com.nello-claw.server.plist.hbs'), plistPath, ctxWithLabel)
-
-  const dest = join(homedir(), 'Library', 'LaunchAgents', `${LAUNCHAGENT_LABEL}.plist`)
-  mkdirSync(dirname(dest), { recursive: true })
-  copyFileSync(plistPath, dest)
-
-  const uid = process.getuid?.() ?? 501
-  try { execSync(`launchctl bootout gui/${uid}/${LAUNCHAGENT_LABEL}`, { stdio: 'ignore' }) } catch {}
-  try {
-    execSync(`launchctl bootstrap gui/${uid} "${dest}"`, { stdio: 'ignore' })
-    ok(`LaunchAgent installed (${LAUNCHAGENT_LABEL}, starts on login)`)
-  } catch (err) {
-    fail(`LaunchAgent load failed: ${err.message}`)
-  }
+function installService() {
+  // Cross-platform: delegates to scripts/install-service.js (Mac launchctl / Win schtasks / Linux systemd)
+  const res = spawnSync('node', [join(TEMPLATE_DIR, 'scripts', 'install-service.js')], {
+    env: {
+      ...process.env,
+      NC_INSTALL_PATH: INSTALL_PATH,
+      NC_LAUNCHAGENT_LABEL: LAUNCHAGENT_LABEL,
+    },
+    stdio: 'inherit',
+  })
+  if (res.status !== 0) fail(`service install failed (exit ${res.status})`)
 }
 
 function seedMorningBrief(bundle) {
@@ -229,8 +221,8 @@ async function main() {
   ok('store/, workspace/uploads/, memory/')
 
   if (bundle.installLaunchAgent) {
-    info('Installing LaunchAgent')
-    installLaunchAgent(ctx)
+    info('Installing auto-start service')
+    installService()
   }
 
   if (bundle.enableMorningBrief) {

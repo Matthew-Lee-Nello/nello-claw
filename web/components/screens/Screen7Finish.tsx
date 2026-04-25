@@ -3,7 +3,10 @@
 import { useState } from 'react'
 import { useWizard } from '@/lib/store'
 
-const PASTE_PROMPT = `Install nello-claw. My bundle is at ~/Downloads/nello-claw-bundle.json. Read https://raw.githubusercontent.com/Matthew-Lee-Nello/nello-claw/main/INSTALL_GUIDE.md and follow every step. Ask me for confirmation before anything destructive.`
+const MAC_ONELINER = 'curl -fsSL https://labs.nello.gg/i/mac | bash'
+const WIN_ONELINER = 'irm https://labs.nello.gg/i/win | iex'
+
+const FALLBACK_PROMPT = `Install nello-claw. My bundle is at ~/Downloads/nello-claw-bundle.json. Read https://raw.githubusercontent.com/Matthew-Lee-Nello/nello-claw/main/INSTALL_GUIDE.md and follow every step.`
 
 const EXTRA_ABILITIES = [
   { id: 'mcp-builder',        label: 'Help me build new connections',           desc: 'Walks you through plugging in any new service.' },
@@ -46,11 +49,6 @@ export default function Screen7Finish() {
     }
   }
 
-  const copy = async () => {
-    await navigator.clipboard.writeText(PASTE_PROMPT)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
 
   return (
     <div className="screen">
@@ -132,31 +130,48 @@ export default function Screen7Finish() {
         </button>
       </div>
 
-      {token && (
-        <div style={{ marginTop: 32 }}>
-          <h3>Last step</h3>
-          <p>
-            We have downloaded your setup to <code>~/Downloads/nello-claw-bundle.json</code>.
-            Open Claude Code and paste this:
-          </p>
-          <div
-            className="install-command"
-            onClick={copy}
-            title="Click to copy"
-            style={{ cursor: 'pointer' }}
-          >
-            {PASTE_PROMPT}
+      {token && (() => {
+        const isWin = bundle.platform === 'windows'
+        const oneliner = isWin ? WIN_ONELINER : MAC_ONELINER
+        const terminalName = isWin ? 'PowerShell' : 'Terminal'
+        const terminalHint = isWin
+          ? 'Press the Windows key, type "PowerShell", hit Enter.'
+          : 'Press Cmd+Space, type "Terminal", hit Enter.'
+
+        return (
+          <div style={{ marginTop: 32 }}>
+            <h3>Last step</h3>
+            <p>
+              Your setup downloaded to <code>~/Downloads/nello-claw-bundle.json</code>.
+              Open <strong>{terminalName}</strong> and paste this one line:
+            </p>
+            <div
+              className="install-command"
+              onClick={() => { navigator.clipboard.writeText(oneliner); setCopied(true); setTimeout(() => setCopied(false), 2000) }}
+              title="Click to copy"
+              style={{ cursor: 'pointer' }}
+            >
+              {oneliner}
+            </div>
+            <button onClick={() => { navigator.clipboard.writeText(oneliner); setCopied(true); setTimeout(() => setCopied(false), 2000) }}>
+              {copied ? 'Copied' : 'Copy to clipboard'}
+            </button>
+            <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 16 }}>
+              {terminalHint} Paste, hit Enter, type your password once when asked.
+              The installer auto-installs anything you are missing (Node, Git, etc),
+              sets everything up, and opens your dashboard. About 5 minutes.
+            </p>
+            <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 12 }}>
+              When the dashboard opens, send a message to your Telegram bot to finish.
+              That last step links your phone to your assistant.
+            </p>
+            <p style={{ color: 'var(--muted)', fontSize: 12, marginTop: 24 }}>
+              Already have Claude Code installed? You can paste this prompt instead:{' '}
+              <code style={{ wordBreak: 'break-all' }}>{FALLBACK_PROMPT}</code>
+            </p>
           </div>
-          <button onClick={copy}>{copied ? 'Copied' : 'Copy to clipboard'}</button>
-          <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 16 }}>
-            Your assistant will read the install steps, set everything up, ask you for the
-            Telegram chat ID once, and confirm everything is running. Takes about five minutes.
-          </p>
-          <p style={{ color: 'var(--muted)', fontSize: 13, marginTop: 12 }}>
-            Your keys never went anywhere. They are on your machine, in a file only you can read.
-          </p>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }

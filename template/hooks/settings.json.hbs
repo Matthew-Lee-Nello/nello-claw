@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash {{installPath}}/hooks/inject-brain-context.sh"
+            "command": "node {{installPath}}/hooks/inject-brain-context.js"
           }
         ]
       }
@@ -44,7 +44,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash {{installPath}}/hooks/graphify-incremental.sh"
+            "command": "node {{installPath}}/hooks/graphify-incremental.js"
           }
         ]
       }
@@ -52,6 +52,6 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash {{installPath}}/hooks/statusline.sh"
+    "command": "node {{installPath}}/hooks/statusline.js"
   }
 }
