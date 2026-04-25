@@ -1,0 +1,35 @@
+{
+  "name": "nello-claw-template",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Runtime template cloned into the user's ~/nello-claw/ on install",
+  "scripts": {
+    "bootstrap": "node bootstrap.js",
+    "build": "pnpm -r build && tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "schedule": "pnpm --filter @nc/scheduler exec nc-schedule",
+    "audit": "pnpm --filter @nc/audit exec nello-claw audit",
+    "doctor": "pnpm --filter @nc/audit exec nello-claw doctor",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test"
+  },
+  "dependencies": {
+    "@nc/audit": "workspace:*",
+    "@nc/bot-telegram": "workspace:*",
+    "@nc/core": "workspace:*",
+    "@nc/dashboard": "workspace:*",
+    "@nc/scheduler": "workspace:*",
+    "@nc/vault-seeder": "workspace:*",
+    "@nc/voice-local": "workspace:*",
+    "@nc/voice-online": "workspace:*",
+    "handlebars": "^4.7.8",
+    "tsx": "^4.11.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  },
+  "engines": { "node": ">=20" },
+  "packageManager": "pnpm@9.12.0"
+}

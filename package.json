@@ -1,0 +1,19 @@
+{
+  "name": "nello-claw",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hosted live-compile Brain Method setup for Claude Code",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "dev:web": "pnpm --filter web dev",
+    "dev:dashboard": "pnpm --filter @nc/dashboard dev"
+  },
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.12.0"
+}

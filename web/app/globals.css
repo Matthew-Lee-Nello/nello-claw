@@ -1,0 +1,181 @@
+:root {
+  --bg: #000000;
+  --panel: #0d0d0d;
+  --border: #1f1f1f;
+  --text: #ffffff;
+  --muted: #8a8a94;
+  --accent: #FFA600;
+  --accent-dim: rgba(255, 166, 0, 0.12);
+  --green: #4ade80;
+  --red: #f87171;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-figtree, 'Figtree'), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+input[type="text"], input[type="email"], input[type="password"], textarea, select {
+  width: 100%;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+textarea { resize: vertical; min-height: 72px; }
+
+button {
+  background: var(--accent);
+  color: var(--bg);
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+button:hover { opacity: 0.92; }
+button.secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+button.secondary:hover { border-color: var(--accent); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.hero {
+  max-width: 780px;
+  margin: 80px auto;
+  padding: 0 24px;
+}
+.hero h1 { font-size: 48px; letter-spacing: -0.02em; margin: 0 0 12px; font-weight: 700; line-height: 1.1; }
+.hero h1 span { color: var(--accent); }
+.hero p { color: var(--muted); font-size: 17px; line-height: 1.7; }
+.hero .cta { margin-top: 32px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+.wizard {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 40px;
+  padding: 40px 24px;
+}
+.wizard-nav { position: sticky; top: 40px; align-self: start; }
+.wizard-nav ol { list-style: none; padding: 0; margin: 0; }
+.wizard-nav li {
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+}
+.wizard-nav li.active { background: var(--accent-dim); color: var(--accent); }
+.wizard-nav li.done { color: var(--accent); opacity: 0.6; }
+.wizard-nav li:hover { background: var(--panel); color: var(--text); }
+
+.screen {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px;
+}
+.screen h2 { margin: 0 0 8px; font-size: 28px; letter-spacing: -0.01em; font-weight: 600; }
+.screen h3 { font-size: 15px; margin: 24px 0 12px; font-weight: 600; }
+.screen .intro { color: var(--muted); margin-bottom: 28px; }
+
+.field { margin-bottom: 20px; }
+.field label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s;
+}
+.chip:hover { border-color: var(--accent); }
+.chip.on { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+
+.repeatable {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+.repeatable .row + button { margin-top: 8px; }
+
+.nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 32px;
+}
+
+.panel-help {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.install-command {
+  background: var(--bg);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  font-size: 13px;
+  margin: 16px 0;
+  user-select: all;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+code {
+  background: var(--panel);
+  color: var(--accent);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Menlo', 'Monaco', monospace;
+  font-size: 0.9em;
+}

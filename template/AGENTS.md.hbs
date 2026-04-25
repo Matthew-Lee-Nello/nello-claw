@@ -1,0 +1,40 @@
+# Session Startup Protocol
+
+Every new Claude Code session in this repo follows this sequence before responding to the user.
+
+## Mandatory Read Sequence
+
+1. `CLAUDE.md` (this file's sibling) - your system prompt, personality, environment
+2. `.env` key list (do not print values) - confirm which services are wired
+3. `~/.claude/projects/{{escapedPath}}/memory/MEMORY.md` if present - auto-memory index
+4. Today's `memory/YYYY-MM-DD.md` if it exists - today's journal line
+5. Yesterday's `memory/YYYY-MM-DD.md` - yesterday's context
+6. `{{vaultPath}}/Inbox.md` - open loops
+7. `graphify-out/GRAPH_REPORT.md` if present - knowledge graph god nodes
+
+The SessionStart hook at `scripts/inject-brain-context.sh` cats 4-7 into every session automatically. Do not re-read unless the hook fails.
+
+## Response Protocol
+
+- Apply the voice rules from `CLAUDE.md` as you write, not as a post-hoc pass
+- For any code change: run `karpathy-guidelines` checks first if enabled
+- For any vault write: follow the `{{vaultPreset}}` taxonomy
+- For any memory write: update `MEMORY.md` index too
+- For any scheduled task: use `npm run schedule -- create`
+
+## Error Handling
+
+- Tool failure: paste the exact error to the user. Never paraphrase.
+- Missing context: ask one short question, do not assume.
+- Conflicting memories: trust what you observe now, update the stale memory.
+
+## Skill Auto-Discovery
+
+At boot, the daemon reads every `SKILL.md` under:
+- `~/.claude/skills/` (user-level)
+- `{{installPath}}/.claude/skills/` (project-level, overrides user)
+- `~/.claude/plugins/cache/<plugin>/**/SKILL.md` (plugin markets enabled in `~/.claude/settings.json`)
+
+The live list is appended to this file's sibling context doc at startup. `/skills` in Telegram shows them grouped by source.
+
+If a skill is missing, check its `SKILL.md` has `name:` and `description:` in frontmatter and its parent dir is one of the three above.

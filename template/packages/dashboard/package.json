@@ -1,0 +1,43 @@
+{
+  "name": "@nc/dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/server/index.js",
+  "types": "./dist/server/index.d.ts",
+  "exports": {
+    ".": "./dist/server/index.js",
+    "./server": "./dist/server/index.js"
+  },
+  "scripts": {
+    "build": "pnpm build:ui && pnpm build:server",
+    "build:server": "tsc -p tsconfig.server.json",
+    "build:ui": "vite build",
+    "dev": "vite",
+    "dev:server": "tsx src/server/index.ts",
+    "typecheck": "tsc -p tsconfig.server.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nc/core": "workspace:*",
+    "@nc/scheduler": "workspace:*",
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "ws": "^8.18.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.7",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/ws": "^8.5.10",
+    "@vitejs/plugin-react": "^4.3.1",
+    "tsx": "^4.11.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.3.4",
+    "vitest": "^2.1.0"
+  }
+}
