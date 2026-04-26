@@ -40,15 +40,13 @@ export const DEFAULT_BUNDLE: Bundle = {
   // User-entered (Screen 2 - Connections)
   keys: {},
 
-  // All connections that work without keys + the ones we collect keys for, auto-on.
-  // Apify + n8n stay off (need keys we no longer ask for).
+  // Four integrations the install ships with. Connections that work without
+  // keys (Obsidian) + the ones we collect keys for (Google, Exa).
+  // Telegram lives outside this map; it's a bot, not an MCP.
   mcps: {
     google: true,
     exa: true,
     obsidian: true,
-    gitnexus: true,
-    apify: false,
-    n8n: false,
   },
 
   // Surfaces - all on, no user choice

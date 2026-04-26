@@ -8,15 +8,17 @@ export default function Landing() {
         Your executive AI assistant. One that knows everything about you, and just does the job.
       </p>
       <p>
-        Answer seven quick questions. Connect your accounts. Get an assistant that handles your
+        Answer a few questions. Connect your accounts. Get an assistant that handles your
         inbox, your calendar, your notes, your follow-ups, your daily briefings - the admin
         work you do not want to do anymore.
       </p>
 
       <ul style={{ paddingLeft: 20, lineHeight: 1.9, color: 'var(--text)', marginTop: 24 }}>
-        <li>Reads and writes your Gmail, Drive, Docs, Calendar</li>
-        <li>Texts you from anywhere - reply by message or voice</li>
-        <li>Remembers your projects, clients, decisions, preferences</li>
+        <li>Reads and writes your Gmail, Drive, Docs, Calendar (Google Workspace)</li>
+        <li>Reads and writes your second brain (Obsidian vault)</li>
+        <li>Researches the live web (Exa)</li>
+        <li>Texts you from anywhere via Telegram, voice or text</li>
+        <li>Remembers your projects, clients, decisions, preferences forever</li>
         <li>Runs your morning briefing while you sleep</li>
         <li>Picks up your writing style and matches it</li>
       </ul>

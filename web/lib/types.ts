@@ -48,12 +48,7 @@ export interface Bundle {
   mcps: {
     google?: boolean
     obsidian?: boolean
-    tavily?: boolean
     exa?: boolean
-    firecrawl?: boolean
-    gitnexus?: boolean
-    apify?: boolean
-    n8n?: boolean
   }
 
   installTelegram: boolean
