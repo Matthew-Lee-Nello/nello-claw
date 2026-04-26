@@ -302,31 +302,60 @@ function installUv() {
   }
 }
 
+// Cache result so end-of-install summary can mention if user still needs to install Obsidian.
+let _obsidianInstalled = false
+
 function installObsidianApp() {
-  // Cross-platform Obsidian.app install. Idempotent - skips if already installed.
-  // Runs from bootstrap so EVERY entry path gets Obsidian (bash one-liner, PowerShell,
-  // Claude Code paste-in, manual git clone + node bootstrap all hit this same code).
+  // Cross-platform Obsidian install with real fallbacks. Idempotent - skips if
+  // already installed. Runs from bootstrap so EVERY entry path gets Obsidian
+  // (bash one-liner, PowerShell, Claude Code paste-in, manual git clone all
+  // hit this same code).
   const platform = process.platform
+
   if (platform === 'darwin') {
-    if (existsSync('/Applications/Obsidian.app')) { ok('Obsidian.app already installed'); return }
+    if (existsSync('/Applications/Obsidian.app')) { ok('Obsidian.app already installed'); _obsidianInstalled = true; return }
+    // Try Homebrew first
     try {
       execSync('which brew', { stdio: 'pipe' })
       execSync('brew install --cask obsidian', { stdio: 'pipe' })
-      ok('Obsidian.app installed via Homebrew')
+      if (existsSync('/Applications/Obsidian.app')) { ok('Obsidian.app installed via Homebrew'); _obsidianInstalled = true; return }
+    } catch {}
+    // Fallback - download .dmg directly + open it. User drag-drops to Applications.
+    // Better than nothing: at least the user sees Obsidian in their face.
+    try {
+      const dmg = join(process.env.TMPDIR || '/tmp', 'Obsidian.dmg')
+      execSync(`curl -fsSL -o "${dmg}" https://github.com/obsidianmd/obsidian-releases/releases/latest/download/Obsidian-universal.dmg`, { stdio: 'pipe' })
+      execSync(`open "${dmg}"`, { stdio: 'pipe' })
+      warn('Obsidian.dmg opened - drag the app icon to Applications, then close the disk image. Vault still works as plain markdown if you skip.')
     } catch {
-      warn('Obsidian.app not installed - get it from obsidian.md (vault still works as plain markdown)')
+      warn('Obsidian install skipped - get it from https://obsidian.md/download (vault still works as plain markdown)')
     }
   } else if (platform === 'win32') {
-    const exe = join(process.env.LOCALAPPDATA || '', 'Obsidian', 'Obsidian.exe')
-    if (existsSync(exe)) { ok('Obsidian.exe already installed'); return }
+    const exeCandidates = [
+      join(process.env.LOCALAPPDATA || '', 'Obsidian', 'Obsidian.exe'),
+      join(process.env.LOCALAPPDATA || '', 'Programs', 'Obsidian', 'Obsidian.exe'),
+      'C:\\Program Files\\Obsidian\\Obsidian.exe',
+      'C:\\Program Files (x86)\\Obsidian\\Obsidian.exe',
+    ]
+    if (exeCandidates.some(p => existsSync(p))) { ok('Obsidian already installed'); _obsidianInstalled = true; return }
+    // Try winget first
     try {
       execSync('winget install --silent --accept-source-agreements --accept-package-agreements Obsidian.Obsidian', { stdio: 'pipe' })
-      ok('Obsidian installed via winget')
+      if (exeCandidates.some(p => existsSync(p))) { ok('Obsidian installed via winget'); _obsidianInstalled = true; return }
+    } catch {}
+    // Fallback - download installer + run silently
+    try {
+      const installer = join(process.env.TEMP || process.env.LOCALAPPDATA || '.', 'Obsidian-installer.exe')
+      info('Downloading Obsidian installer (winget unavailable)...')
+      execSync(`powershell -NoProfile -Command "irm https://obsidian.md/download | Out-Null; Invoke-WebRequest -Uri 'https://github.com/obsidianmd/obsidian-releases/releases/latest/download/Obsidian.exe' -OutFile '${installer}'"`, { stdio: 'pipe' })
+      execSync(`"${installer}" /S`, { stdio: 'pipe' })  // /S = silent install
+      if (exeCandidates.some(p => existsSync(p))) { ok('Obsidian installed via direct download'); _obsidianInstalled = true; return }
+      warn('Obsidian installer ran but app not found at expected path. Open https://obsidian.md/download and install manually.')
     } catch {
-      warn('Obsidian not installed - get it from obsidian.md (vault still works as plain markdown)')
+      warn('Obsidian install skipped - get it from https://obsidian.md/download (vault still works as plain markdown)')
     }
   } else {
-    warn('Linux: install Obsidian manually from obsidian.md (vault still works as plain markdown)')
+    warn('Linux: install Obsidian manually from https://obsidian.md/download (vault still works as plain markdown)')
   }
 }
 
@@ -533,7 +562,7 @@ async function main() {
   // Final summary - clear "here's the dashboard" callout.
   console.log(`\n${ACCENT}╔══ Your assistant is ready ══╗${RESET}`)
   console.log(`  ${ACCENT}Dashboard:${RESET}   ${dashboardUrl}  ${DIM}${dashboardHealthy ? '✓ open in browser' : '⚠ opening - refresh once daemon starts'}${RESET}`)
-  console.log(`  ${ACCENT}Vault:${RESET}       ${join(INSTALL_PATH, 'vault')}  ${DIM}(open in Obsidian)${RESET}`)
+  console.log(`  ${ACCENT}Vault:${RESET}       ${join(INSTALL_PATH, 'vault')}  ${DIM}${_obsidianInstalled ? '(open in Obsidian)' : '⚠ install Obsidian from https://obsidian.md/download to view as a graph'}${RESET}`)
   console.log(`  ${ACCENT}Telegram:${RESET}    send any message to your bot to link your phone`)
   console.log(`${ACCENT}╚════════════════════════════╝${RESET}\n`)
   console.log(`${DIM}Stuck? Open Claude Code in this folder and type ${RESET}${ACCENT}/install-doctor${RESET}${DIM} for a full audit.${RESET}\n`)
