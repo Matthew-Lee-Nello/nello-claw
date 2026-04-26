@@ -52,7 +52,10 @@ export async function runAgent(
         }
       }
       if (event.type === 'result') {
-        text = (event as any).result?.result ?? null
+        // SDK shape: { type: 'result', subtype: 'success'|'error_*', result: string, ... }
+        // event.result IS the assistant's text (a string), not an object with a .result field.
+        // Earlier code did event.result?.result which always returned undefined -> "(no response)".
+        text = (event as any).result ?? null
       }
     }
 

@@ -113,10 +113,10 @@ SQLite at `store/clawd.db` holds short-term conversation memory with dual sector
 **The vault is the permanent memory.** Everything that should outlive a session lives in `{{installPath}}/vault/` as Obsidian markdown:
 - `vault/Memory/<type>_<topic>.md` - auto-captured user/feedback/project/reference notes (UserPromptSubmit hook writes them)
 - `vault/Memory/MEMORY.md` - wikilink index to all memories
-- `vault/Journal/YYYY-MM-DD.md` - daily journal (one note per day)
 - `vault/Inbox.md` - quick-capture for thoughts that don't have a home yet
+- `vault/Journal/` - empty by default; write your own daily notes here, or ask {{assistantName}} to summarise the day into `Journal/YYYY-MM-DD.md`
 
-The SessionStart hook reads `vault/Memory/MEMORY.md`, today's + yesterday's `vault/Journal/`, and `vault/graphify-out/GRAPH_REPORT.md` into every new session. Obsidian provides the graph view + search UI on top of these files.
+The SessionStart hook reads `vault/Memory/MEMORY.md`, today's + yesterday's `vault/Journal/` (if present), and `vault/graphify-out/GRAPH_REPORT.md` into every new session. Obsidian provides the graph view + search UI on top of these files.
 
 ## Vault Taxonomy - {{vaultPreset}}
 

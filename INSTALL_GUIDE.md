@@ -20,7 +20,7 @@ Running the install fills your chosen folder with:
 - `.env` - your API keys (Telegram, Google, optional ones), permissions set so only you can read it
 - `vault/` - your Obsidian vault, structured per the system you picked (NELLO/PARA/Zettelkasten/Custom)
   - `vault/Memory/` - your assistant auto-captures preferences/feedback/decisions here as Obsidian notes (the vault IS the permanent memory)
-  - `vault/Journal/` - one note per day, written by the daemon as you use it
+  - `vault/Journal/` - empty by default; write your own daily notes here, or ask the assistant to summarise into `YYYY-MM-DD.md`. SessionStart hook reads today + yesterday's journal back into context if files are present.
   - `vault/.obsidian/` - pre-configured dark theme + FFA600 accent + graph view tuned for your scale
 - `store/clawd.db` - SQLite database for short-term conversation context, scheduled tasks, sessions
 - `node_modules/`, `dist/` - dependencies and compiled code
