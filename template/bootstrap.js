@@ -17,11 +17,14 @@
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, symlinkSync, unlinkSync, lstatSync, copyFileSync, readdirSync, chmodSync } from 'node:fs'
 import { join, dirname, basename } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { homedir } from 'node:os'
 import { execSync, spawnSync } from 'node:child_process'
 import Handlebars from 'handlebars'
 
-const TEMPLATE_DIR = dirname(new URL(import.meta.url).pathname)
+// Use fileURLToPath so install paths with spaces (e.g. "/Users/foo/Work - Claude AI/")
+// don't end up percent-encoded. new URL(...).pathname keeps "%20" for spaces.
+const TEMPLATE_DIR = dirname(fileURLToPath(import.meta.url))
 const INSTALL_PATH = process.env.NC_INSTALL_PATH || process.cwd()
 const BUNDLE_PATH = process.env.NC_BUNDLE || join(INSTALL_PATH, 'bundle.json')
 
@@ -151,6 +154,51 @@ function installService() {
     stdio: 'inherit',
   })
   if (res.status !== 0) fail(`service install failed (exit ${res.status})`)
+}
+
+function createMacAppShortcut() {
+  const appDir = join(homedir(), 'Applications', 'nello-claw.app')
+  const macOSDir = join(appDir, 'Contents', 'MacOS')
+  const resourcesDir = join(appDir, 'Contents', 'Resources')
+  mkdirSync(macOSDir, { recursive: true })
+  mkdirSync(resourcesDir, { recursive: true })
+
+  // Copy icon if present in the cloned repo
+  const repoIcon = join(TEMPLATE_DIR, '..', 'installer', 'icon.icns')
+  if (existsSync(repoIcon)) {
+    try { copyFileSync(repoIcon, join(resourcesDir, 'icon.icns')) } catch {}
+  }
+
+  const launcher = `#!/bin/bash
+URL="http://localhost:3000"
+if open -Ra "Google Chrome" 2>/dev/null; then
+  open -na "Google Chrome" --args --app="$URL"
+elif open -Ra "Microsoft Edge" 2>/dev/null; then
+  open -na "Microsoft Edge" --args --app="$URL"
+else
+  open "$URL"
+fi
+`
+  writeFileSync(join(macOSDir, 'run'), launcher)
+  try { execSync(`chmod +x "${join(macOSDir, 'run')}"`) } catch {}
+
+  const plist = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleExecutable</key><string>run</string>
+  <key>CFBundleIconFile</key><string>icon</string>
+  <key>CFBundleIdentifier</key><string>com.nello-claw.app</string>
+  <key>CFBundleName</key><string>nello-claw</string>
+  <key>CFBundleDisplayName</key><string>nello-claw</string>
+  <key>CFBundleVersion</key><string>1.0</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>LSUIElement</key><false/>
+</dict>
+</plist>
+`
+  writeFileSync(join(appDir, 'Contents', 'Info.plist'), plist)
+  ok(`Mac app shortcut at ${appDir}`)
 }
 
 function installUv() {
@@ -335,17 +383,49 @@ async function main() {
     })
   } catch {}
 
+  // Mac app shortcut. Universal here so all entry paths get it (bash one-liner,
+  // PowerShell, Claude Code paste-in, manual git clone).
+  if (process.platform === 'darwin') {
+    info('Creating Mac app shortcut')
+    createMacAppShortcut()
+  }
+
+  // The daemon uses the user's Claude Code session via the Claude Agent SDK.
+  // No API key needed - SDK reads ~/.claude/.credentials.json (Claude Code login).
+  // If that file is missing, runAgent() returns "(no response)" silently.
+  // This is the #1 thing that breaks installs.
+  const claudeCreds = join(homedir(), '.claude', '.credentials.json')
+  const hasClaudeLogin = existsSync(claudeCreds)
+
   // Bundle still has plaintext keys. Tell the user, don't auto-delete.
   // Auto-delete looks like covering tracks; explicit deletion is safer + clearer.
   console.log(`\n${ACCENT}Done.${RESET}\n`)
   console.log(`Your keys are now in ${INSTALL_PATH}/.env (chmod 600).`)
   console.log(`The original bundle still has plaintext copies. ${ACCENT}Delete it now:${RESET}`)
   console.log(`  ${DIM}rm "${BUNDLE_PATH}"${RESET}\n`)
-  console.log(`Next:`)
-  console.log(`  cd ${INSTALL_PATH}`)
-  console.log(`  claude                       ${DIM}# open Claude Code here${RESET}`)
-  console.log(`  open http://localhost:3000   ${DIM}# web dashboard${RESET}`)
-  console.log(`  ${DIM}your vault auto-opens in Obsidian${RESET}\n`)
+
+  if (!hasClaudeLogin) {
+    console.log(`${RED}One more thing - log in to Claude Code.${RESET}`)
+    console.log(`The daemon talks to Claude through your Claude Code session. Run this once:`)
+    console.log(`  ${ACCENT}claude${RESET}`)
+    console.log(`${DIM}It opens a browser, you sign in with Claude.ai (free), it caches credentials at ~/.claude/.credentials.json.${RESET}`)
+    console.log(`${DIM}Then restart the daemon:${RESET}`)
+    if (process.platform === 'darwin') {
+      console.log(`  ${DIM}launchctl kickstart -k gui/$(id -u)/${LAUNCHAGENT_LABEL}${RESET}`)
+    } else if (process.platform === 'win32') {
+      console.log(`  ${DIM}schtasks /End /TN "${LAUNCHAGENT_LABEL}" && schtasks /Run /TN "${LAUNCHAGENT_LABEL}"${RESET}`)
+    } else {
+      console.log(`  ${DIM}systemctl --user restart ${LAUNCHAGENT_LABEL}${RESET}`)
+    }
+    console.log(`${DIM}Without this, the dashboard chat will say "(no response)".${RESET}\n`)
+  } else {
+    console.log(`${ACCENT}Claude Code login: ready${RESET} ${DIM}(daemon will talk to Claude through your session)${RESET}\n`)
+  }
+
+  console.log(`Open the dashboard:`)
+  console.log(`  ${DIM}open http://localhost:3000${RESET}`)
+  console.log(`  ${DIM}(your vault should already be open in Obsidian)${RESET}\n`)
+  console.log(`${DIM}Stuck? Open Claude Code in this folder and type ${RESET}${ACCENT}/install-doctor${RESET}${DIM} for a full audit.${RESET}\n`)
 }
 
 main().catch((err) => {

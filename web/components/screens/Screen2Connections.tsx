@@ -13,12 +13,15 @@ export default function Screen2Connections() {
   const secret = bundle.keys.GOOGLE_OAUTH_CLIENT_SECRET ?? ''
   const exa = bundle.keys.EXA_API_KEY ?? ''
 
-  const ready =
-    tg.trim().length > 20 &&
-    email.includes('@') &&
-    cid.length > 10 &&
-    secret.length > 10 &&
-    exa.length > 10
+  // Tighter validation - prevents users typing single-character placeholders
+  // to skip past required fields (Isaac's install ended up with cid=1 char,
+  // email="k", exa=1 char which broke the daemon).
+  const tgValid = /^\d+:[A-Za-z0-9_-]{30,}$/.test(tg.trim())
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  const cidValid = cid.length > 30 || cid.includes('apps.googleusercontent.com')
+  const secretValid = secret.length > 20
+  const exaValid = exa.length > 20
+  const ready = tgValid && emailValid && cidValid && secretValid && exaValid
 
   return (
     <div className="screen">

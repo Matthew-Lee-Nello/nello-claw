@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node {{installPath}}/hooks/inject-brain-context.js"
+            "command": "node {{installPath}}/template/hooks/inject-brain-context.js"
           }
         ]
       }
@@ -33,7 +33,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node {{installPath}}/hooks/auto-memory.js"
+            "command": "node {{installPath}}/template/hooks/auto-memory.js"
           }
         ]
       }
@@ -44,7 +44,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node {{installPath}}/hooks/graphify-incremental.js"
+            "command": "node {{installPath}}/template/hooks/graphify-incremental.js"
           }
         ]
       }
@@ -52,6 +52,6 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "node {{installPath}}/hooks/statusline.js"
+    "command": "node {{installPath}}/template/hooks/statusline.js"
   }
 }

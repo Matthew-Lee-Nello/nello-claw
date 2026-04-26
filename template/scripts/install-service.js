@@ -20,7 +20,10 @@ const TEMPLATE_DIR = join(__dirname, '..')
 const INSTALL = process.env.NC_INSTALL_PATH || join(homedir(), 'nello-claw')
 const LABEL = process.env.NC_LAUNCHAGENT_LABEL || 'com.nello-claw.server'
 const NODE = process.execPath
-const ENTRY = join(INSTALL, 'dist', 'index.js')
+// Daemon entry compiled to template/dist/index.js (the @nc/template package
+// builds into its own dist/, not the install root). Don't change without also
+// fixing template/package.json's build output path.
+const ENTRY = join(INSTALL, 'template', 'dist', 'index.js')
 
 const ACCENT = '\x1b[38;2;255;166;0m'
 const RED = '\x1b[38;2;255;80;80m'
