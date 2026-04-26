@@ -43,7 +43,7 @@ date: YYYY-MM-DD
 
 ## Journal
 
-`memory/YYYY-MM-DD.md` is the daily journal, separate from `Log-YYYY-MM-DD.md`. The journal is auto-appended by the bot. The Log is hand-written.
+`Journal/YYYY-MM-DD.md` is for your own daily notes. Empty by default - write your own, or ask your assistant to summarise the day into one. The SessionStart hook reads today's + yesterday's journal back into every new conversation if files are present. `Log-YYYY-MM-DD.md` is hand-written activity logs (separate from the journal).
 
 ## Inbox
 

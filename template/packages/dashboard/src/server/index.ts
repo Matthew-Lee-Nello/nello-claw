@@ -12,7 +12,12 @@ import { monitoringRouter } from './routes/monitoring.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
-export function startDashboard(): { close: () => void } {
+export interface DashboardHandle {
+  close: () => void
+  port: number
+}
+
+export function startDashboard(): DashboardHandle {
   const app = express()
   app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000', 'http://127.0.0.1:5173'] }))
   app.use(express.json({ limit: '200mb' }))
@@ -38,11 +43,36 @@ export function startDashboard(): { close: () => void } {
     })
   })
 
-  server.listen(DASHBOARD_PORT, () => {
-    logger.info({ port: DASHBOARD_PORT }, 'Dashboard listening')
-  })
+  // Port fallback - if DASHBOARD_PORT is in use (another daemon, leftover process,
+  // backup software), step up by 1 until we find a free port. Log which one won.
+  let actualPort = DASHBOARD_PORT
+  const MAX_ATTEMPTS = 5
+  let attempts = 0
 
-  return { close: () => server.close() }
+  const tryListen = (port: number): void => {
+    server.once('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE' && attempts < MAX_ATTEMPTS) {
+        attempts++
+        const next = port + 1
+        logger.warn({ port, next, attempts }, 'port in use, trying next')
+        actualPort = next
+        tryListen(next)
+      } else {
+        logger.error({ err, port }, 'dashboard listen failed')
+        throw err
+      }
+    })
+    server.listen(port, () => {
+      actualPort = port
+      logger.info({ port }, 'Dashboard listening')
+    })
+  }
+  tryListen(DASHBOARD_PORT)
+
+  return {
+    close: () => server.close(),
+    get port() { return actualPort },
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

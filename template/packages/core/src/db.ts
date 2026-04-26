@@ -12,11 +12,31 @@ let _db: Database.Database | null = null
 
 export function getDb(): Database.Database {
   if (_db) return _db
-  _db = new Database(DB_PATH)
-  _db.pragma('journal_mode = WAL')
-  _db.pragma('foreign_keys = ON')
-  initDatabase(_db)
-  return _db
+  // Retry with backoff if the DB is locked (stale daemon, backup software, etc).
+  // better-sqlite3's busy_timeout pragma handles transient locks within a single
+  // call; this loop covers the open() itself in case the file is held exclusively.
+  let lastErr: unknown = null
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      _db = new Database(DB_PATH)
+      _db.pragma('journal_mode = WAL')
+      _db.pragma('foreign_keys = ON')
+      _db.pragma('busy_timeout = 5000')  // wait up to 5s for transient locks
+      initDatabase(_db)
+      return _db
+    } catch (err) {
+      lastErr = err
+      const msg = err instanceof Error ? err.message : String(err)
+      if (!/SQLITE_BUSY|database is locked|cannot open/i.test(msg)) throw err
+      const wait = (attempt + 1) * 1000
+      logger.warn({ err: msg, attempt: attempt + 1, waitMs: wait }, 'SQLite locked, retrying')
+      // Synchronous spin-wait so the rest of startup waits before continuing
+      const until = Date.now() + wait
+      while (Date.now() < until) { /* spin */ }
+    }
+  }
+  logger.error({ err: lastErr }, 'failed to open SQLite after 4 attempts. Try: pkill -f "node.*nello-claw" then rerun')
+  throw lastErr
 }
 
 export function initDatabase(db: Database.Database = getDb()): void {

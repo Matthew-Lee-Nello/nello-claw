@@ -42,6 +42,12 @@ export function chatRouter(): Router {
     const text: string = req.body?.text ?? ''
     if (!text.trim()) { res.status(400).json({ error: 'empty message' }); return }
 
+    // Validate the chat exists before inserting messages, otherwise the
+    // FOREIGN KEY constraint surfaces as an opaque 500 (Isaac hit this with
+    // chat_id="test"). Return 404 with a clear message instead.
+    const chatRow = getDb().prepare('SELECT id FROM dashboard_chats WHERE id = ? AND archived_at IS NULL').get(chatId) as { id: string } | undefined
+    if (!chatRow) { res.status(404).json({ error: `chat not found: ${chatId}. POST /api/chat first to create one.` }); return }
+
     const now = Date.now()
     getDb().prepare('INSERT INTO dashboard_messages (chat_id, role, content, created_at) VALUES (?, ?, ?, ?)').run(chatId, 'user', text, now)
 

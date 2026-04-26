@@ -1,8 +1,8 @@
 import { spawn, execSync } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { tmpdir, homedir, platform } from 'node:os'
+import { basename, join } from 'node:path'
 import { logger } from '@nc/core'
 
 function run(cmd: string, args: string[], stdin?: Buffer | string): Promise<{ stdout: Buffer; stderr: string; code: number }> {
@@ -40,7 +40,7 @@ export async function transcribeAudio(filePath: string): Promise<string> {
     ])
     if (res.code !== 0) throw new Error(res.stderr || 'mlx-whisper failed')
 
-    const outPath = join(tmpdir(), filePath.split('/').pop()!.replace(/\.[^.]+$/, '.txt'))
+    const outPath = join(tmpdir(), basename(filePath).replace(/\.[^.]+$/, '.txt'))
     const transcript = await readFile(outPath, 'utf-8')
     return transcript.trim()
   } catch (err) {
@@ -57,7 +57,7 @@ export async function transcribeAudio(filePath: string): Promise<string> {
  * Requires: brew install piper  AND  a .onnx voice model at $PIPER_VOICE
  */
 export async function synthesizeSpeech(text: string): Promise<Buffer> {
-  const voice = process.env.PIPER_VOICE ?? join(process.env.HOME ?? '~', '.local', 'share', 'piper', 'en_US-amy-medium.onnx')
+  const voice = process.env.PIPER_VOICE ?? join(homedir(), '.local', 'share', 'piper', 'en_US-amy-medium.onnx')
   if (!existsSync(voice)) {
     throw new Error(`Piper voice model not found at ${voice}. Set PIPER_VOICE env var.`)
   }
@@ -68,9 +68,11 @@ export async function synthesizeSpeech(text: string): Promise<Buffer> {
 }
 
 export function voiceCapabilities(): { stt: boolean; tts: boolean } {
+  // Cross-platform binary check (Windows uses `where`, *nix uses `which`)
+  const probe = platform() === 'win32' ? 'where' : 'which'
   const hasBinary = (cmd: string): boolean => {
     try {
-      execSync(`which ${cmd}`, { stdio: 'ignore' })
+      execSync(`${probe} ${cmd}`, { stdio: 'ignore' })
       return true
     } catch { return false }
   }

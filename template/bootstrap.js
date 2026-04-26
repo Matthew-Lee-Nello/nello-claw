@@ -201,6 +201,42 @@ fi
   ok(`Mac app shortcut at ${appDir}`)
 }
 
+function createWindowsShortcuts() {
+  // Drop Start Menu + Desktop .lnk shortcuts using a tiny PowerShell one-liner.
+  // Mirrors what install.ps1 does, but runs from bootstrap so the Claude Code
+  // paste-in path also gets the shortcut (install.ps1 only fires from the
+  // PowerShell one-liner entry).
+  const startMenu = join(process.env.APPDATA || join(homedir(), 'AppData', 'Roaming'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'nello-claw.lnk')
+  const desktop = join(homedir(), 'Desktop', 'nello-claw.lnk')
+
+  // Find Chrome / Edge so the shortcut opens the dashboard in app-mode
+  const programFiles = process.env['ProgramFiles'] || 'C:\\Program Files'
+  const localAppData = process.env.LOCALAPPDATA || join(homedir(), 'AppData', 'Local')
+  const chromeCandidates = [
+    join(programFiles, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    join(localAppData, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    join(programFiles, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+  ]
+  const browser = chromeCandidates.find(p => existsSync(p)) || ''
+  const url = 'http://localhost:3000'
+
+  const icoCandidate = join(TEMPLATE_DIR, '..', 'installer', 'icon.ico')
+  const iconLine = existsSync(icoCandidate) ? `$s.IconLocation = '${icoCandidate},0';` : ''
+
+  const target = browser || url
+  const args = browser ? `--app=${url}` : ''
+
+  for (const shortcutPath of [startMenu, desktop]) {
+    const ps = `$ws=New-Object -ComObject WScript.Shell; $s=$ws.CreateShortcut('${shortcutPath.replace(/'/g, "''")}'); $s.TargetPath='${target.replace(/'/g, "''")}'; $s.Arguments='${args}'; ${iconLine} $s.Description='nello-claw - your AI executive assistant'; $s.Save();`
+    try {
+      execSync(`powershell -NoProfile -Command "${ps.replace(/"/g, '\\"')}"`, { stdio: 'pipe' })
+    } catch (err) {
+      warn(`Couldn't create ${basename(shortcutPath)}: ${err.message?.split('\n')[0] || 'unknown'}`)
+    }
+  }
+  ok('Windows shortcuts created (Start Menu + Desktop)')
+}
+
 function installUv() {
   // uv ships uvx, which `template/.mcp.json.hbs` calls to run `workspace-mcp`
   // (the Google Workspace MCP). Without uv, Google MCP fails with command not found.
@@ -307,7 +343,7 @@ async function main() {
   // Upfront summary so user (and Claude in plan mode) sees every change before any of them happen.
   console.log(`${ACCENT}This bootstrap will make these changes:${RESET}`)
   console.log(`  ${DIM}1.${RESET} Write personalised files to ${INSTALL_PATH}/ (CLAUDE.md, AGENTS.md, .env, .mcp.json, vault/)`)
-  console.log(`  ${DIM}2.${RESET} chmod 600 on ${INSTALL_PATH}/.env so only you can read it`)
+  console.log(`  ${DIM}2.${RESET} ${process.platform === 'win32' ? `Lock down ${INSTALL_PATH}\\.env via NTFS user-only ACL` : `chmod 600 on ${INSTALL_PATH}/.env so only you can read it`}`)
   console.log(`  ${DIM}3.${RESET} Symlink ${readdirSync(join(TEMPLATE_DIR, 'skills')).length} bundled skills into ${SKILLS_DIR} (existing skills with same names get .bak'd)`)
   console.log(`  ${DIM}4.${RESET} Write project-scoped settings to ${SETTINGS_PATH}`)
   console.log(`     ${DIM}(this enables bypassPermissions ONLY when working in this folder, NOT globally)${RESET}`)
@@ -383,11 +419,14 @@ async function main() {
     })
   } catch {}
 
-  // Mac app shortcut. Universal here so all entry paths get it (bash one-liner,
+  // App shortcut. Universal here so all entry paths get it (bash one-liner,
   // PowerShell, Claude Code paste-in, manual git clone).
   if (process.platform === 'darwin') {
     info('Creating Mac app shortcut')
     createMacAppShortcut()
+  } else if (process.platform === 'win32') {
+    info('Creating Windows shortcuts')
+    createWindowsShortcuts()
   }
 
   // The daemon uses the user's Claude Code session via the Claude Agent SDK.
@@ -400,7 +439,7 @@ async function main() {
   // Bundle still has plaintext keys. Tell the user, don't auto-delete.
   // Auto-delete looks like covering tracks; explicit deletion is safer + clearer.
   console.log(`\n${ACCENT}Done.${RESET}\n`)
-  console.log(`Your keys are now in ${INSTALL_PATH}/.env (chmod 600).`)
+  console.log(`Your keys are now in ${INSTALL_PATH}/.env ${process.platform === 'win32' ? '(NTFS user-only)' : '(chmod 600)'}.`)
   console.log(`The original bundle still has plaintext copies. ${ACCENT}Delete it now:${RESET}`)
   console.log(`  ${DIM}rm "${BUNDLE_PATH}"${RESET}\n`)
 
@@ -423,7 +462,13 @@ async function main() {
   }
 
   console.log(`Open the dashboard:`)
-  console.log(`  ${DIM}open http://localhost:3000${RESET}`)
+  if (process.platform === 'darwin') {
+    console.log(`  ${DIM}open http://localhost:3000${RESET}`)
+  } else if (process.platform === 'win32') {
+    console.log(`  ${DIM}start http://localhost:3000${RESET}`)
+  } else {
+    console.log(`  ${DIM}xdg-open http://localhost:3000${RESET}`)
+  }
   console.log(`  ${DIM}(your vault should already be open in Obsidian)${RESET}\n`)
   console.log(`${DIM}Stuck? Open Claude Code in this folder and type ${RESET}${ACCENT}/install-doctor${RESET}${DIM} for a full audit.${RESET}\n`)
 }
