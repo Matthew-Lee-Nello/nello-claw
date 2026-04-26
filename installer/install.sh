@@ -202,33 +202,51 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-if [ "$HEALTHY" -eq 1 ]; then
-  ok "dashboard is up at $DASHBOARD_URL"
-  say "opening it now"
+# Always open the dashboard URL + Obsidian vault. Even if the daemon hasn't
+# finished starting in 30s, opening the page now means the user sees it the
+# moment it's ready (browser will show "can't connect" until then, then load).
+# The previous behaviour of leaving the user staring at a terminal made it
+# look like the install had silently failed.
+open_dashboard() {
   if [[ "$(uname)" == "Darwin" ]]; then
-    touch "$HOME/Applications/nello-claw.app" 2>/dev/null
     if [ -d "$HOME/Applications/nello-claw.app" ]; then
-      open "$HOME/Applications/nello-claw.app"
+      open "$HOME/Applications/nello-claw.app" 2>/dev/null || open "$DASHBOARD_URL" 2>/dev/null || true
     else
-      open "$DASHBOARD_URL"
+      open "$DASHBOARD_URL" 2>/dev/null || true
     fi
-    # Open vault in Obsidian alongside the dashboard
     if [ -d "/Applications/Obsidian.app" ] && [ -d "$INSTALL_PATH/vault" ]; then
       open -a Obsidian "$INSTALL_PATH/vault" 2>/dev/null || true
     fi
   elif command -v xdg-open >/dev/null 2>&1; then
-    xdg-open "$DASHBOARD_URL" >/dev/null 2>&1
+    xdg-open "$DASHBOARD_URL" >/dev/null 2>&1 || true
     if command -v obsidian >/dev/null 2>&1 && [ -d "$INSTALL_PATH/vault" ]; then
       obsidian "$INSTALL_PATH/vault" >/dev/null 2>&1 &
     fi
   fi
+}
+
+if [ "$HEALTHY" -eq 1 ]; then
+  ok "dashboard is up at $DASHBOARD_URL"
+  open_dashboard
 else
-  warn "dashboard didn't come up in 30s. Open it manually: $DASHBOARD_URL"
-  warn "if that fails, check ${INSTALL_PATH}/store/server.log for errors"
+  warn "dashboard didn't respond on /api/monitoring/health within 30s."
+  warn "opening it anyway - the daemon may still be starting in the background."
+  open_dashboard
+  echo ""
+  echo "  ${DIM}Last 30 lines of ${INSTALL_PATH}/store/server.log (so you can see why):${RESET}"
+  if [ -f "$INSTALL_PATH/store/server.log" ]; then
+    tail -30 "$INSTALL_PATH/store/server.log" | sed 's/^/  /'
+  else
+    echo "  (no server.log found yet - daemon may not have started)"
+  fi
+  echo ""
+  echo "  ${ACCENT}If the dashboard tab is blank or shows 'can't connect':${RESET}"
+  echo "  1. Run ${ACCENT}/install-doctor${RESET} in Claude Code from this folder"
+  echo "  2. Or restart the daemon: ${DIM}launchctl kickstart -k gui/\$(id -u)/com.nello-claw.server${RESET}"
 fi
 
-printf "\n${ACCENT}nello-claw ready.${RESET}\n"
-printf "  Dashboard:  %s\n" "$DASHBOARD_URL"
-printf "  ${DIM}Send a message to your Telegram bot to finish setup.${RESET}\n\n"
-printf "If the dashboard didn't open automatically:\n"
-printf "  ${DIM}open %s${RESET} (Mac) or paste in browser\n\n" "$DASHBOARD_URL"
+printf "\n${ACCENT}nello-claw is installed.${RESET}\n"
+printf "  Dashboard:  %s${DIM} (already opening in your browser)${RESET}\n" "$DASHBOARD_URL"
+printf "  Vault:      %s${DIM} (already opening in Obsidian)${RESET}\n" "$INSTALL_PATH/vault"
+printf "  ${DIM}Now send any message to your Telegram bot - that links your phone to your assistant.${RESET}\n\n"
+printf "${DIM}Stuck? Type ${RESET}${ACCENT}/install-doctor${RESET}${DIM} in Claude Code from this folder for a full audit.${RESET}\n\n"

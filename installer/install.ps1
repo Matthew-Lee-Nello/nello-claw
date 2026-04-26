@@ -181,30 +181,50 @@ for ($i = 0; $i -lt 30; $i++) {
   Start-Sleep -Seconds 1
 }
 
-if (-not $Healthy) {
-  Warn "dashboard didn't come up in 30s. Open it manually: $DashboardUrl"
-  Warn "if that fails, check $InstallPath\store\server.log for errors"
-} elseif ($chromePath) {
-  Ok "dashboard is up at $DashboardUrl"
-  Start-Process -FilePath $chromePath -ArgumentList "--app=$DashboardUrl"
-} else {
-  Ok "dashboard is up at $DashboardUrl"
-  Start-Process $DashboardUrl
+function Open-Dashboard {
+  if ($script:chromePath) {
+    Start-Process -FilePath $script:chromePath -ArgumentList "--app=$script:DashboardUrl" -ErrorAction SilentlyContinue
+  } else {
+    Start-Process $script:DashboardUrl -ErrorAction SilentlyContinue
+  }
+  if ((Test-Path $script:ObsidianExe) -and (Test-Path (Join-Path $script:InstallPath "vault"))) {
+    $vaultUri = "obsidian://open?path=" + [uri]::EscapeDataString((Join-Path $script:InstallPath "vault"))
+    try { Start-Process $vaultUri } catch { Start-Process -FilePath $script:ObsidianExe -ErrorAction SilentlyContinue }
+  }
 }
 
-# Open vault in Obsidian alongside the dashboard
-if ((Test-Path $ObsidianExe) -and (Test-Path (Join-Path $InstallPath "vault"))) {
-  $vaultUri = "obsidian://open?path=" + [uri]::EscapeDataString((Join-Path $InstallPath "vault"))
-  try { Start-Process $vaultUri } catch { Start-Process -FilePath $ObsidianExe }
+# Always open the dashboard + Obsidian vault. Even if the daemon hasn't finished
+# starting in 30s, opening the page now means the user sees it the moment it's
+# ready. Previous behaviour of leaving the user staring at a terminal made it
+# look like the install had silently failed.
+if ($Healthy) {
+  Ok "dashboard is up at $DashboardUrl"
+  Open-Dashboard
+} else {
+  Warn "dashboard didn't respond on /api/monitoring/health within 30s."
+  Warn "opening it anyway - the daemon may still be starting in the background."
+  Open-Dashboard
+  Write-Host ""
+  Write-Host "  ${Dim}Last 30 lines of $InstallPath\store\server.log (so you can see why):${Reset}"
+  $logFile = Join-Path $InstallPath "store\server.log"
+  if (Test-Path $logFile) {
+    Get-Content $logFile -Tail 30 | ForEach-Object { Write-Host "  $_" }
+  } else {
+    Write-Host "  (no server.log found yet - daemon may not have started)"
+  }
+  Write-Host ""
+  Write-Host "  ${Accent}If the dashboard tab is blank or shows 'can't connect':${Reset}"
+  Write-Host "  1. Run ${Accent}/install-doctor${Reset} in Claude Code from this folder"
+  Write-Host "  2. Or restart the task: ${Dim}schtasks /Run /TN com.nello-claw.server${Reset}"
 }
 
 Stop-Transcript | Out-Null
 
 Write-Host ""
-Write-Host "${Accent}nello-claw ready.${Reset}"
-Write-Host "  Dashboard:  $DashboardUrl"
-Write-Host "  ${Dim}Send a message to your Telegram bot to finish setup.${Reset}"
+Write-Host "${Accent}nello-claw is installed.${Reset}"
+Write-Host "  Dashboard:  $DashboardUrl ${Dim}(already opening in your browser)${Reset}"
+Write-Host "  Vault:      $InstallPath\vault ${Dim}(already opening in Obsidian)${Reset}"
+Write-Host "  ${Dim}Now send any message to your Telegram bot - that links your phone to your assistant.${Reset}"
 Write-Host ""
-Write-Host "If the dashboard didn't open automatically:"
-Write-Host "  ${Dim}Start-Process '$DashboardUrl'${Reset} or paste in browser"
+Write-Host "${Dim}Stuck? Type ${Reset}${Accent}/install-doctor${Reset}${Dim} in Claude Code from this folder for a full audit.${Reset}"
 Write-Host ""
