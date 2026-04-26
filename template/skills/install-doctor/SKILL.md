@@ -65,12 +65,15 @@ Run from the install folder (the one that has `CLAUDE.md`, `.env`, `vault/`).
 - Confirm `.obsidian/appearance.json` has `"accentColor": "#FFA600"`
 
 ## 11. Chat round-trip test
+
+First create a real chat (FOREIGN KEY constraint requires the chat to exist):
 ```bash
-curl -sX POST http://localhost:3000/api/chat/test/message \
+CHAT=$(curl -sX POST http://localhost:3000/api/chat -H 'Content-Type: application/json' -d '{"name":"doctor-test"}' | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+curl -sX POST "http://localhost:3000/api/chat/$CHAT/message" \
   -H 'Content-Type: application/json' \
-  -d '{"message":"hi"}'
+  -d '{"text":"hi"}'
 ```
-Print the full response. If `reply` is empty/null, the daemon is reachable but the agent is failing - usually Claude Code auth (see step 7).
+Note: the API expects `{"text":"..."}` not `{"message":"..."}`. Print the full response. If `reply` is empty/null, the daemon is reachable but the agent is failing - usually Claude Code auth (see step 7).
 
 ## 12. Telegram bot test
 - Read `TELEGRAM_BOT_TOKEN` from `.env`
@@ -82,26 +85,33 @@ Print the full response. If `reply` is empty/null, the daemon is reachable but t
 - Mac TCC: scan recent `console.log` for "Privacy & Security" denials affecting `claude`, `node`, `obsidian`, or `nello-claw`
 - Note any installer prompts that didn't auto-resolve
 
-## 14. Summary
+## 14. Stale install detection
+- Check for leftover installs at `~/nello-claw/` (Mac/Linux) or `C:\Users\<user>\nello-claw\` (Windows). If one exists AND the current install is somewhere else, flag ⚠ with the cleanup command:
+  - Mac/Linux: `rm -rf ~/nello-claw`
+  - Windows: `Remove-Item -Recurse -Force "$HOME\nello-claw"`
+  Stale installs cause the wrong scheduled task / LaunchAgent to fire on reboot.
+
+## 15. Summary
 
 Print:
 ```
 INSTALL DOCTOR REPORT
 =====================
 
-[1] Install files       ✓ / ✗
-[2] Env keys            ✓ / ⚠ / ✗
-[3] Services running    ✓ / ✗
-[4] Daemon health       ✓ / ✗
-[5] Daemon logs clean   ✓ / ⚠ / ✗
-[6] CLI tools           ✓ / ⚠ / ✗
-[7] Claude Code auth    ✓ / ✗
-[8] Skills wired        ✓ / ✗
-[9] Project settings    ✓ / ⚠ / ✗
-[10] Vault state        ✓ / ⚠ / ✗
-[11] Chat round-trip    ✓ / ✗
-[12] Telegram bot       ✓ / ✗
-[13] Permissions        ✓ / ⚠
+[1]  Install files        ✓ / ✗
+[2]  Env keys             ✓ / ⚠ / ✗
+[3]  Services running     ✓ / ✗
+[4]  Daemon health        ✓ / ✗
+[5]  Daemon logs clean    ✓ / ⚠ / ✗
+[6]  CLI tools            ✓ / ⚠ / ✗
+[7]  Claude Code auth     ✓ / ✗
+[8]  Skills wired         ✓ / ✗
+[9]  Project settings     ✓ / ⚠ / ✗
+[10] Vault state          ✓ / ⚠ / ✗
+[11] Chat round-trip      ✓ / ✗
+[12] Telegram bot         ✓ / ✗
+[13] Permissions          ✓ / ⚠
+[14] Stale install paths  ✓ / ⚠
 
 NEXT 3 THINGS TO FIX (priority order):
 1. ...

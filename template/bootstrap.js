@@ -59,16 +59,27 @@ function renderTemplate(srcHbs, destPath, ctx) {
   writeFileSync(destPath, out, 'utf-8')
 }
 
+// Normalize Windows backslash paths to forward slashes for safe injection into
+// JSON templates (.mcp.json, claude_desktop_config.json, settings.json). Bare
+// backslashes like \U \m \D are invalid JSON escapes and break parsers.
+// Node accepts forward slashes everywhere on Windows for fs ops, so this is
+// universal-safe.
+function toPosixPath(p) {
+  return String(p).replace(/\\/g, '/')
+}
+
 function buildContext(bundle) {
-  const escapedPath = INSTALL_PATH.replace(/^\//, '-').replace(/\//g, '-')
+  const installPathPosix = toPosixPath(INSTALL_PATH)
+  const vaultPathPosix = toPosixPath(bundle.vaultPath || join(INSTALL_PATH, 'vault'))
+  const escapedPath = installPathPosix.replace(/^\//, '-').replace(/\//g, '-')
   return {
     ...bundle,
-    installPath: INSTALL_PATH,
+    installPath: installPathPosix,
     escapedPath,
-    home: homedir(),
-    nodePath: process.execPath,
+    home: toPosixPath(homedir()),
+    nodePath: toPosixPath(process.execPath),
     today: new Date().toISOString().slice(0, 10),
-    vaultPath: bundle.vaultPath || join(INSTALL_PATH, 'vault'),
+    vaultPath: vaultPathPosix,
     env: bundle.keys || {},
     mcps: bundle.mcps || {},
   }
@@ -272,7 +283,14 @@ function installUv() {
       execSync('winget install --silent --accept-source-agreements --accept-package-agreements astral-sh.uv', { stdio: 'pipe' })
       ok('uv installed via winget')
     } catch {
-      warn('uv install failed - run: powershell -c "irm https://astral.sh/uv/install.ps1 | iex"')
+      // winget may not be available on older Win10 or in restricted environments.
+      // Fall back to astral.sh's PowerShell installer (works without admin or winget).
+      try {
+        execSync('powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://astral.sh/uv/install.ps1 | iex"', { stdio: 'pipe' })
+        ok('uv installed via astral.sh PowerShell script')
+      } catch {
+        warn('uv install failed via winget AND astral.sh fallback. Google Workspace MCP will not run until you install uv manually (https://docs.astral.sh/uv/).')
+      }
     }
   } else {
     try {
@@ -472,16 +490,67 @@ async function main() {
     console.log(`${ACCENT}Claude Code login: ready${RESET} ${DIM}(daemon will talk to Claude through your session)${RESET}\n`)
   }
 
-  console.log(`Open the dashboard:`)
-  if (process.platform === 'darwin') {
-    console.log(`  ${DIM}open http://localhost:3000${RESET}`)
-  } else if (process.platform === 'win32') {
-    console.log(`  ${DIM}start http://localhost:3000${RESET}`)
-  } else {
-    console.log(`  ${DIM}xdg-open http://localhost:3000${RESET}`)
+  // Poll the dashboard health endpoint for up to 30s, then auto-open the
+  // browser regardless. Even if the daemon hasn't bound to the port yet, the
+  // browser will show "can't connect" → load the page once it does. Better
+  // UX than leaving the user staring at terminal text wondering what to do.
+  const dashboardUrl = readDashboardUrl()
+  info(`Waiting for dashboard at ${dashboardUrl}`)
+  let dashboardHealthy = false
+  for (let i = 0; i < 30; i++) {
+    try {
+      const res = await fetch(`${dashboardUrl}/api/monitoring/health`, { signal: AbortSignal.timeout(2000) })
+      if (res.ok) { dashboardHealthy = true; break }
+    } catch {}
+    await new Promise(r => setTimeout(r, 1000))
   }
-  console.log(`  ${DIM}(your vault should already be open in Obsidian)${RESET}\n`)
+
+  if (dashboardHealthy) {
+    ok(`Dashboard is up at ${dashboardUrl}`)
+  } else {
+    warn(`Dashboard didn't respond on /api/monitoring/health within 30s. Opening anyway - it may still be starting.`)
+    const logFile = join(INSTALL_PATH, 'store', 'server.log')
+    if (existsSync(logFile)) {
+      console.log(`\n${DIM}Last 30 lines of ${logFile}:${RESET}`)
+      try {
+        const log = readFileSync(logFile, 'utf-8').split('\n').slice(-30).join('\n')
+        console.log(log.split('\n').map(l => `  ${l}`).join('\n'))
+      } catch {}
+    }
+  }
+
+  // Auto-open browser. Ignore errors - if the user has no GUI, this is a no-op.
+  try {
+    if (process.platform === 'darwin') {
+      execSync(`open "${dashboardUrl}"`, { stdio: 'ignore' })
+    } else if (process.platform === 'win32') {
+      execSync(`start "" "${dashboardUrl}"`, { stdio: 'ignore', shell: 'cmd.exe' })
+    } else {
+      execSync(`xdg-open "${dashboardUrl}"`, { stdio: 'ignore' })
+    }
+  } catch {}
+
+  // Final summary - clear "here's the dashboard" callout.
+  console.log(`\n${ACCENT}╔══ Your assistant is ready ══╗${RESET}`)
+  console.log(`  ${ACCENT}Dashboard:${RESET}   ${dashboardUrl}  ${DIM}${dashboardHealthy ? '✓ open in browser' : '⚠ opening - refresh once daemon starts'}${RESET}`)
+  console.log(`  ${ACCENT}Vault:${RESET}       ${join(INSTALL_PATH, 'vault')}  ${DIM}(open in Obsidian)${RESET}`)
+  console.log(`  ${ACCENT}Telegram:${RESET}    send any message to your bot to link your phone`)
+  console.log(`${ACCENT}╚════════════════════════════╝${RESET}\n`)
   console.log(`${DIM}Stuck? Open Claude Code in this folder and type ${RESET}${ACCENT}/install-doctor${RESET}${DIM} for a full audit.${RESET}\n`)
+}
+
+function readDashboardUrl() {
+  // Read DASHBOARD_PORT from .env if set, else default 3000
+  let port = '3000'
+  try {
+    const envPath = join(INSTALL_PATH, '.env')
+    if (existsSync(envPath)) {
+      const env = readFileSync(envPath, 'utf-8')
+      const match = env.match(/^DASHBOARD_PORT=(.+)$/m)
+      if (match) port = match[1].replace(/^["']|["']$/g, '').trim()
+    }
+  } catch {}
+  return `http://localhost:${port}`
 }
 
 main().catch((err) => {
