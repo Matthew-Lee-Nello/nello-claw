@@ -15,7 +15,7 @@
  *   7. Run audit at the end
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, symlinkSync, unlinkSync, lstatSync, copyFileSync, readdirSync, chmodSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, symlinkSync, unlinkSync, lstatSync, copyFileSync, readdirSync, chmodSync, renameSync } from 'node:fs'
 import { join, dirname, basename } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { homedir } from 'node:os'
@@ -98,25 +98,36 @@ function symlinkSkills() {
   const dest = SKILLS_DIR
   mkdirSync(dest, { recursive: true })
 
+  // Use 'junction' on Windows so users don't need Developer Mode or admin to
+  // install. Junctions work for directory targets exactly like symlinks but
+  // don't require the SeCreateSymbolicLinkPrivilege. All bundled skills are
+  // directories, so junction is a drop-in replacement here.
+  const linkType = process.platform === 'win32' ? 'junction' : 'dir'
+
   for (const name of readdirSync(src)) {
     const srcPath = join(src, name)
     const destPath = join(dest, name)
     if (existsSync(destPath)) {
       try {
         const stat = lstatSync(destPath)
-        if (stat.isSymbolicLink()) {
-          unlinkSync(destPath)
+        if (stat.isSymbolicLink() || (process.platform === 'win32' && stat.isDirectory())) {
+          // Symlink (Mac/Linux) or junction (Windows) - safe to remove
+          try { unlinkSync(destPath) } catch { try { renameSync(destPath, `${destPath}.bak-${Date.now()}`) } catch {} }
         } else {
-          // Back up existing dir
+          // Real directory - back up so we don't blow away user data
           const bak = `${destPath}.bak-${Date.now()}`
-          execSync(`mv "${destPath}" "${bak}"`)
+          renameSync(destPath, bak)
           warn(`backed up existing skill to ${basename(bak)}`)
         }
       } catch {}
     }
-    symlinkSync(srcPath, destPath)
+    try {
+      symlinkSync(srcPath, destPath, linkType)
+    } catch (err) {
+      warn(`couldn't link ${name}: ${err.message?.split('\n')[0] || 'unknown'}. Skill won't be discoverable until linked manually.`)
+    }
   }
-  ok(`linked ${readdirSync(src).length} skills into ~/.claude/skills/`)
+  ok(`linked ${readdirSync(src).length} skills into ${dest}`)
 }
 
 function mergeSettingsJson(ctx) {
