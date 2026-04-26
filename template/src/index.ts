@@ -5,7 +5,7 @@
 
 import { writeFileSync, existsSync, readFileSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
-import { initDatabase, decayMemories, logger, PROJECT_ROOT, STORE_DIR, TELEGRAM_BOT_TOKEN, ALLOWED_CHAT_IDS } from '@nc/core'
+import { initDatabase, runDecaySweep, logger, PROJECT_ROOT, STORE_DIR, TELEGRAM_BOT_TOKEN, ALLOWED_CHAT_IDS } from '@nc/core'
 import { createBot, discoverChatId } from '@nc/bot-telegram'
 import { initScheduler, stopScheduler } from '@nc/scheduler'
 import { startDashboard } from '@nc/dashboard/server'
@@ -39,9 +39,9 @@ async function main() {
   initDatabase()
   acquireLock()
 
-  // Daily decay sweep
-  decayMemories()
-  const decayTimer = setInterval(decayMemories, 24 * 60 * 60 * 1000)
+  // Daily decay sweep + snapshot writer (vault/Memory/Daily/<date>.md)
+  runDecaySweep()
+  const decayTimer = setInterval(runDecaySweep, 24 * 60 * 60 * 1000)
 
   // Start dashboard
   const dashboard = startDashboard()

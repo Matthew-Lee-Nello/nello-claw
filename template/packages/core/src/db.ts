@@ -202,12 +202,12 @@ export function touchMemory(id: number): void {
   `).run(now, MEMORY_ACCESS_BOOST, MEMORY_MAX_SALIENCE, id)
 }
 
-export function decayMemories(): number {
+export function decayMemories(): { decayed: number; deleted: number } {
   const now = Math.floor(Date.now() / 1000)
   const dayAgo = now - 86400
-  getDb().prepare('UPDATE memories SET salience = salience * ? WHERE created_at < ?').run(MEMORY_DAILY_DECAY, dayAgo)
-  const result = getDb().prepare('DELETE FROM memories WHERE salience < ?').run(MEMORY_DELETE_THRESHOLD)
-  return result.changes
+  const decayed = getDb().prepare('UPDATE memories SET salience = salience * ? WHERE created_at < ?').run(MEMORY_DAILY_DECAY, dayAgo)
+  const deleted = getDb().prepare('DELETE FROM memories WHERE salience < ?').run(MEMORY_DELETE_THRESHOLD)
+  return { decayed: decayed.changes, deleted: deleted.changes }
 }
 
 export function clearMemories(chatId: string): number {

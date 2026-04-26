@@ -2,16 +2,17 @@ import React, { useEffect, useState } from 'react'
 import Chat from './pages/Chat'
 import Cron from './pages/Cron'
 import Monitoring from './pages/Monitoring'
+import Memory from './pages/Memory'
 
-type Page = 'chat' | 'cron' | 'monitoring'
+type Page = 'chat' | 'cron' | 'monitoring' | 'memory'
 
 const STORAGE_KEY = 'nc-last-page'
+const VALID: Page[] = ['chat', 'cron', 'monitoring', 'memory']
 
 function initialPage(): Page {
   if (typeof window === 'undefined') return 'chat'
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored === 'chat' || stored === 'cron' || stored === 'monitoring') return stored
-  return 'chat'
+  const stored = localStorage.getItem(STORAGE_KEY) as Page | null
+  return stored && VALID.includes(stored) ? stored : 'chat'
 }
 
 export default function App() {
@@ -36,10 +37,12 @@ export default function App() {
       <aside className="sidebar">
         <h1>Nello Claw</h1>
         {nav('chat', 'Chat')}
+        {nav('memory', 'Memory')}
         {nav('cron', 'Schedules')}
         {nav('monitoring', 'Health')}
       </aside>
       {page === 'chat' && <Chat />}
+      {page === 'memory' && <Memory />}
       {page === 'cron' && <Cron />}
       {page === 'monitoring' && <Monitoring />}
     </div>

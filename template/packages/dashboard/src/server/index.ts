@@ -9,6 +9,7 @@ import { DASHBOARD_PORT, logger } from '@nc/core'
 import { chatRouter } from './routes/chat.js'
 import { cronRouter } from './routes/cron.js'
 import { monitoringRouter } from './routes/monitoring.js'
+import { memoriesRouter } from './routes/memories.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -25,6 +26,7 @@ export function startDashboard(): DashboardHandle {
   app.use('/api/chat', chatRouter())
   app.use('/api/cron', cronRouter())
   app.use('/api/monitoring', monitoringRouter())
+  app.use('/api/memories', memoriesRouter())
 
   // Serve built UI. Compiled server lives at dist/server/index.js, UI at dist/ui/.
   const uiDir = join(__dirname, '..', 'ui')
