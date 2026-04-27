@@ -33,7 +33,9 @@ printf "${DIM}install path: %s${RESET}\n\n" "$INSTALL_PATH"
 # Refuse to install into a folder that already has unrelated files
 if [ -d "$INSTALL_PATH" ]; then
   if [ ! -d "$INSTALL_PATH/.git" ]; then
-    NON_DOT_COUNT=$(ls -A "$INSTALL_PATH" 2>/dev/null | grep -v '^\.' | grep -v '^bundle.json$' | grep -v '^install.log$' | wc -l | tr -d ' ')
+    # find avoids the grep-no-match-returns-1 problem that kills `set -euo pipefail`
+    # on a truly empty folder (the common case for a fresh install).
+    NON_DOT_COUNT=$(find "$INSTALL_PATH" -maxdepth 1 -mindepth 1 ! -name '.*' ! -name 'bundle.json' ! -name 'install.log' 2>/dev/null | wc -l | tr -d ' ')
     if [ "$NON_DOT_COUNT" -gt 0 ]; then
       fail "Folder $INSTALL_PATH already has files. Make a fresh empty folder + cd there + rerun."
     fi
@@ -154,15 +156,21 @@ if [[ "$(uname)" == "Darwin" ]]; then
     cp "$INSTALL_PATH/installer/icon.icns" "$APP_DIR/Contents/Resources/icon.icns"
   fi
 
-  cat > "$APP_DIR/Contents/MacOS/run" <<'LAUNCHER'
+  # Bake the install path in so the launcher reads DASHBOARD_PORT from this
+  # install's .env at click time. Hard-coding 3000 sent users to the wrong
+  # dashboard when they picked a different port.
+  cat > "$APP_DIR/Contents/MacOS/run" <<LAUNCHER
 #!/bin/bash
-URL="http://localhost:3000"
+INSTALL_PATH="$INSTALL_PATH"
+PORT=\$(grep -E '^DASHBOARD_PORT=' "\$INSTALL_PATH/.env" 2>/dev/null | cut -d= -f2 | tr -d '"' || true)
+PORT=\${PORT:-3000}
+URL="http://localhost:\${PORT}"
 if open -Ra "Google Chrome" 2>/dev/null; then
-  open -na "Google Chrome" --args --app="$URL"
+  open -na "Google Chrome" --args --app="\$URL"
 elif open -Ra "Microsoft Edge" 2>/dev/null; then
-  open -na "Microsoft Edge" --args --app="$URL"
+  open -na "Microsoft Edge" --args --app="\$URL"
 else
-  open "$URL"
+  open "\$URL"
 fi
 LAUNCHER
   chmod +x "$APP_DIR/Contents/MacOS/run"

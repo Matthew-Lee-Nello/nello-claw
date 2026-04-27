@@ -143,14 +143,25 @@ if (-not (Test-Path $chromePath)) { $chromePath = $null }
 $icoPath = Join-Path $InstallPath "installer\icon.ico"
 if (-not (Test-Path $icoPath)) { $icoPath = $null }
 
+# Read DASHBOARD_PORT from this install's .env so the shortcut points at the
+# right port. Hard-coding 3000 sent users to the wrong dashboard when they
+# picked a different port.
+$ShortcutPort = "3000"
+$envFileForShortcut = Join-Path $InstallPath ".env"
+if (Test-Path $envFileForShortcut) {
+  $portLineForShortcut = Get-Content $envFileForShortcut | Select-String -Pattern '^DASHBOARD_PORT='
+  if ($portLineForShortcut) { $ShortcutPort = (($portLineForShortcut -split '=', 2)[1]).Trim('"') }
+}
+$ShortcutUrl = "http://localhost:$ShortcutPort"
+
 foreach ($shortcutPath in @($startMenu, $desktop)) {
   $WshShell = New-Object -ComObject WScript.Shell
   $shortcut = $WshShell.CreateShortcut($shortcutPath)
   if ($chromePath) {
     $shortcut.TargetPath = $chromePath
-    $shortcut.Arguments = "--app=http://localhost:3000"
+    $shortcut.Arguments = "--app=$ShortcutUrl"
   } else {
-    $shortcut.TargetPath = "http://localhost:3000"
+    $shortcut.TargetPath = $ShortcutUrl
   }
   if ($icoPath) {
     $shortcut.IconLocation = "$icoPath,0"
