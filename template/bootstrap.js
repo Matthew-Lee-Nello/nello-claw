@@ -559,13 +559,26 @@ async function main() {
     }
   } catch {}
 
-  // Final summary - clear "here's the dashboard" callout.
-  console.log(`\n${ACCENT}╔══ Your assistant is ready ══╗${RESET}`)
-  console.log(`  ${ACCENT}Dashboard:${RESET}   ${dashboardUrl}  ${DIM}${dashboardHealthy ? '✓ open in browser' : '⚠ opening - refresh once daemon starts'}${RESET}`)
-  console.log(`  ${ACCENT}Vault:${RESET}       ${join(INSTALL_PATH, 'vault')}  ${DIM}${_obsidianInstalled ? '(open in Obsidian)' : '⚠ install Obsidian from https://obsidian.md/download to view as a graph'}${RESET}`)
-  console.log(`  ${ACCENT}Telegram:${RESET}    send any message to your bot to link your phone`)
-  console.log(`${ACCENT}╚════════════════════════════╝${RESET}\n`)
-  console.log(`${DIM}Stuck? Open Claude Code in this folder and type ${RESET}${ACCENT}/install-doctor${RESET}${DIM} for a full audit.${RESET}\n`)
+  // Final summary - point user at the dashboard chat. They can ask Claude what's set up.
+  let skillCount = 0, mcpCount = 0
+  try { skillCount = readdirSync(join(TEMPLATE_DIR, 'skills')).length } catch {}
+  try {
+    const m = JSON.parse(readFileSync(join(INSTALL_PATH, '.mcp.json'), 'utf-8'))
+    mcpCount = Object.keys(m.mcpServers || {}).length
+  } catch {}
+  const chatId = (bundle.keys?.ALLOWED_CHAT_ID ?? '').split(',')[0]?.trim()
+  const vaultPath = join(INSTALL_PATH, 'vault')
+
+  console.log(`\n${ACCENT}✓ Done${RESET}\n`)
+  console.log(`${ACCENT}What's set up:${RESET}`)
+  console.log(`  • Dashboard at ${dashboardUrl}${DIM} ${dashboardHealthy ? '(open)' : '(starting...)'}${RESET}`)
+  console.log(`  • Obsidian vault at ${vaultPath}${DIM} ${_obsidianInstalled ? '(open in Obsidian.app)' : '(install Obsidian from https://obsidian.md to view as a graph)'}${RESET}`)
+  if (chatId) console.log(`  • Telegram bot linked to chat ${chatId}`)
+  console.log(`  • ${skillCount} skills, ${mcpCount} MCP servers\n`)
+  console.log(`${ACCENT}Next:${RESET}`)
+  console.log(`  1. Open the dashboard above`)
+  console.log(`  2. Click "Chat" and talk to Claude`)
+  console.log(`  3. Ask him what's been set up — he knows\n`)
 }
 
 function readDashboardUrl() {
