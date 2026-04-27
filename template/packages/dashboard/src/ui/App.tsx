@@ -3,6 +3,7 @@ import Chat from './pages/Chat'
 import Cron from './pages/Cron'
 import Monitoring from './pages/Monitoring'
 import Memory from './pages/Memory'
+import DaemonStatus from './components/DaemonStatus'
 
 type Page = 'chat' | 'cron' | 'monitoring' | 'memory'
 
@@ -40,6 +41,7 @@ export default function App() {
         {nav('memory', 'Memory')}
         {nav('cron', 'Schedules')}
         {nav('monitoring', 'Health')}
+        <DaemonStatus />
       </aside>
       {page === 'chat' && <Chat />}
       {page === 'memory' && <Memory />}

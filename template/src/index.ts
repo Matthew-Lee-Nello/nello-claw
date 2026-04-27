@@ -5,7 +5,7 @@
 
 import { writeFileSync, existsSync, readFileSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
-import { initDatabase, runDecaySweep, logger, PROJECT_ROOT, STORE_DIR, TELEGRAM_BOT_TOKEN, ALLOWED_CHAT_IDS } from '@nc/core'
+import { initDatabase, runDecaySweep, logger, PROJECT_ROOT, STORE_DIR, TELEGRAM_BOT_TOKEN, ALLOWED_CHAT_IDS, registerTelegramBot, setTelegramRunning, setTelegramError, isTelegramPaused } from '@nc/core'
 import { createBot, discoverChatId } from '@nc/bot-telegram'
 import { initScheduler, stopScheduler } from '@nc/scheduler'
 import { startDashboard } from '@nc/dashboard/server'
@@ -59,13 +59,16 @@ async function main() {
     logger.warn('discovery timed out - continuing without chat ID, bot disabled')
   }
 
-  // Start bot if configured
+  // Start bot if configured. Restart loop is pause-aware - the dashboard can
+  // call /api/daemons/telegram/{stop,start} to flip the paused flag and the
+  // loop respects it without exiting the process.
   let bot: ReturnType<typeof createBot> | null = null
   if (TELEGRAM_BOT_TOKEN && ALLOWED_CHAT_IDS.length > 0) {
     bot = createBot({
       transcribeAudio: voiceOnline.transcribeAudio,
       // TTS not wired in online mode. Install @nc/voice-local for Piper TTS.
     })
+    registerTelegramBot(bot)
 
     const sender = async (chatId: string, text: string) => {
       if (!bot) return
@@ -73,10 +76,47 @@ async function main() {
     }
 
     initScheduler(sender)
-    bot.start({ drop_pending_updates: true }).catch(err => {
-      logger.error({ err }, 'bot.start failed')
-    })
-    logger.info({ chats: ALLOWED_CHAT_IDS.length }, 'Telegram bot started')
+    logger.info({ chats: ALLOWED_CHAT_IDS.length }, 'Telegram bot starting')
+
+    // Background restart loop. Don't await - it never resolves while paused
+    // is false and the bot is healthy. Process stays alive via the dashboard
+    // server in the same node process.
+    ;(async () => {
+      let attempt = 0
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        if (isTelegramPaused()) {
+          setTelegramRunning(false)
+          await new Promise(r => setTimeout(r, 2000))
+          continue
+        }
+        try {
+          await bot!.start({
+            drop_pending_updates: true,
+            onStart: () => {
+              attempt = 0
+              setTelegramRunning(true)
+              setTelegramError(null)
+              logger.info('Telegram bot polling')
+            },
+          })
+          setTelegramRunning(false)
+          if (!isTelegramPaused()) {
+            logger.warn('Telegram polling exited cleanly, restarting in 5s')
+            await new Promise(r => setTimeout(r, 5000))
+          }
+        } catch (err) {
+          setTelegramRunning(false)
+          const e = err as { error_code?: number; message?: string }
+          const isConflict = e?.error_code === 409
+          const delay = isConflict ? 30_000 : Math.min(60_000, 2_000 * 2 ** attempt)
+          attempt++
+          setTelegramError(e?.message ?? String(err))
+          logger.error({ err, attempt, delay }, `Telegram polling stopped, restarting in ${Math.round(delay / 1000)}s`)
+          await new Promise(r => setTimeout(r, delay))
+        }
+      }
+    })().catch(err => logger.error({ err }, 'Telegram restart loop crashed'))
   } else if (!TELEGRAM_BOT_TOKEN) {
     logger.warn('TELEGRAM_BOT_TOKEN missing - bot disabled, dashboard only')
   }
@@ -87,7 +127,7 @@ async function main() {
     clearInterval(decayTimer)
     stopScheduler()
     dashboard.close()
-    if (bot) await bot.stop()
+    if (bot) { await bot.stop(); setTelegramRunning(false) }
     releaseLock()
     process.exit(0)
   }

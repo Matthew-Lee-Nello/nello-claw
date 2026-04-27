@@ -10,6 +10,7 @@ import { chatRouter } from './routes/chat.js'
 import { cronRouter } from './routes/cron.js'
 import { monitoringRouter } from './routes/monitoring.js'
 import { memoriesRouter } from './routes/memories.js'
+import { daemonsRouter } from './routes/daemons.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -27,6 +28,7 @@ export function startDashboard(): DashboardHandle {
   app.use('/api/cron', cronRouter())
   app.use('/api/monitoring', monitoringRouter())
   app.use('/api/memories', memoriesRouter())
+  app.use('/api/daemons', daemonsRouter())
 
   // Serve built UI. Compiled server lives at dist/server/index.js, UI at dist/ui/.
   const uiDir = join(__dirname, '..', 'ui')
