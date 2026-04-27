@@ -19,8 +19,11 @@ function play() {
     return
   }
   if (p === 'win32') {
-    // [console]::beep(freq, ms). Two short bright beeps so user hears something distinct.
-    spawn('powershell', ['-NoProfile', '-Command', '[console]::beep(880,120); [console]::beep(1320,120)'], { detached: true, stdio: 'ignore' }).unref()
+    // Play notify.wav via Media.SoundPlayer. Reliable on every modern Windows
+    // (laptops without motherboard speakers don't get [console]::beep).
+    // Fall back to chimes.wav if notify.wav missing.
+    const ps = `try { (New-Object Media.SoundPlayer "$env:windir\\Media\\notify.wav").PlaySync() } catch { (New-Object Media.SoundPlayer "$env:windir\\Media\\chimes.wav").PlaySync() }`
+    spawn('powershell', ['-NoProfile', '-Command', ps], { detached: true, stdio: 'ignore' }).unref()
     return
   }
   // Linux + others: try paplay → aplay → terminal bell.

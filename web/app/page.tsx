@@ -21,6 +21,7 @@ export default function Landing() {
         <li>Remembers your projects, clients, decisions, preferences forever</li>
         <li>Runs your morning briefing while you sleep</li>
         <li>Picks up your writing style and matches it</li>
+        <li>Plays a sound when it finishes a task so you can multitask while it works</li>
       </ul>
 
       <p style={{ marginTop: 24, color: 'var(--muted)' }}>
