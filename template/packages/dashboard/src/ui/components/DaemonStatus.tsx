@@ -1,30 +1,56 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { Icon, type IconName } from './Icon'
 
-interface TelegramState {
+interface BotState {
   configured: boolean
-  chatIdConfigured: boolean
   running: boolean
   paused: boolean
   lastError: string | null
+}
+
+interface TelegramState extends BotState {
+  chatIdConfigured: boolean
   username: string | null
+}
+
+interface WebexState extends BotState {
+  emailsConfigured: boolean
 }
 
 interface DaemonsResponse {
   telegram: TelegramState
+  webex?: WebexState
 }
 
 const POLL_MS = 5000
 
+type Status = 'running' | 'paused' | 'error' | 'idle' | 'off'
+
+function statusOf(s: BotState | undefined): Status {
+  if (!s || !s.configured) return 'off'
+  if (s.lastError) return 'error'
+  if (s.running) return 'running'
+  if (s.paused) return 'paused'
+  return 'idle'
+}
+
+function dotClass(status: Status): string {
+  if (status === 'running') return 'green pulse'
+  if (status === 'paused') return 'amber'
+  if (status === 'error') return 'red'
+  return ''
+}
+
 export default function DaemonStatus() {
   const [data, setData] = useState<DaemonsResponse | null>(null)
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     try {
       const res = await fetch('/api/daemons')
       if (res.ok) setData(await res.json())
     } catch {
-      // keep last known state on transient failures
+      // keep last known state
     }
   }, [])
 
@@ -34,81 +60,95 @@ export default function DaemonStatus() {
     return () => clearInterval(t)
   }, [load])
 
-  const toggle = async () => {
-    if (!data?.telegram?.configured) return
-    const action = data.telegram.running && !data.telegram.paused ? 'stop' : 'start'
-    setBusy(true)
+  if (!data) return null
+
+  const act = async (kind: 'telegram' | 'webex', action: 'start' | 'stop' | 'reboot') => {
+    setBusy(`${kind}-${action}`)
     try {
-      await fetch(`/api/daemons/telegram/${action}`, { method: 'POST' })
+      if (action === 'reboot') {
+        await fetch(`/api/daemons/${kind}/stop`, { method: 'POST' })
+        await new Promise(r => setTimeout(r, 400))
+        await fetch(`/api/daemons/${kind}/start`, { method: 'POST' })
+      } else {
+        await fetch(`/api/daemons/${kind}/${action}`, { method: 'POST' })
+      }
       await load()
     } finally {
-      setBusy(false)
+      setBusy(null)
     }
   }
 
-  if (!data) return null
+  return (
+    <div className="daemon-pill" style={{ gap: 6 }}>
+      <DaemonRow
+        kind="telegram"
+        label="telegram"
+        icon="telegram"
+        state={data.telegram}
+        busy={busy}
+        onAct={act}
+      />
+      {data.webex && (
+        <DaemonRow
+          kind="webex"
+          label="webex"
+          icon="webex"
+          state={data.webex}
+          busy={busy}
+          onAct={act}
+        />
+      )}
+    </div>
+  )
+}
 
-  const { telegram: tg } = data
-  const dotColour =
-    !tg.configured ? '#444' :
-    tg.lastError ? 'var(--red, #f87171)' :
-    tg.running ? 'var(--green, #4ade80)' :
-    tg.paused ? '#f59e0b' :
-    '#666'
-
-  const statusLabel =
-    !tg.configured ? 'not configured' :
-    tg.lastError ? 'error' :
-    tg.running ? 'running' :
-    tg.paused ? 'paused' :
-    'starting…'
+function DaemonRow({
+  kind, label, icon, state, busy, onAct,
+}: {
+  kind: 'telegram' | 'webex'
+  label: string
+  icon: IconName
+  state: BotState
+  busy: string | null
+  onAct: (kind: 'telegram' | 'webex', action: 'start' | 'stop' | 'reboot') => void
+}) {
+  const status = statusOf(state)
+  const isRunning = status === 'running'
 
   return (
-    <div
-      style={{
-        marginTop: 'auto',
-        padding: '12px',
-        borderTop: '1px solid var(--border)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        fontSize: 12,
-      }}
-      title={tg.lastError ?? undefined}
-    >
-      <span
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: '50%',
-          background: dotColour,
-          flexShrink: 0,
-        }}
-      />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ color: 'var(--text)', fontWeight: 500 }}>
-          Telegram {tg.username ? <span style={{ color: 'var(--muted)', fontWeight: 400 }}>@{tg.username}</span> : null}
-        </div>
-        <div style={{ color: 'var(--muted)', fontSize: 11 }}>{statusLabel}</div>
+    <div className="col" style={{ gap: 6 }} title={state.lastError ?? undefined}>
+      <div className="row" style={{ gap: 6, fontSize: 11, color: 'var(--dim)' }}>
+        <span className={`dot sm ${dotClass(status)}`} />
+        <Icon name={icon} size={11} />
+        <span className="mono">{label}</span>
+        <span className="muted-text mono" style={{ marginLeft: 'auto', fontSize: 10 }}>{status}</span>
       </div>
-      {tg.configured && (
+      <div className="row" style={{ gap: 4 }}>
         <button
-          onClick={toggle}
-          disabled={busy}
-          style={{
-            background: 'transparent',
-            border: '1px solid var(--border)',
-            color: 'var(--muted)',
-            borderRadius: 4,
-            padding: '3px 8px',
-            fontSize: 11,
-            cursor: busy ? 'wait' : 'pointer',
-          }}
-          title={tg.running ? 'Stop polling' : 'Start polling'}
+          className={`btn btn-sm ${isRunning ? '' : 'btn-primary'}`}
+          style={{ flex: 1, justifyContent: 'center', height: 22 }}
+          disabled={!state.configured || isRunning || busy != null}
+          onClick={() => onAct(kind, 'start')}
         >
-          {tg.running && !tg.paused ? 'Stop' : 'Start'}
+          <Icon name="play" size={10} /> Start
         </button>
-      )}
+        <button
+          className="btn btn-sm"
+          style={{ flex: 1, justifyContent: 'center', height: 22 }}
+          disabled={!state.configured || !isRunning || busy != null}
+          onClick={() => onAct(kind, 'stop')}
+        >
+          <Icon name="stop" size={10} /> Stop
+        </button>
+        <button
+          className="btn btn-sm"
+          style={{ flex: 1, justifyContent: 'center', height: 22 }}
+          disabled={!state.configured || busy != null}
+          onClick={() => onAct(kind, 'reboot')}
+        >
+          <Icon name="zap" size={10} /> Reboot
+        </button>
+      </div>
     </div>
   )
 }

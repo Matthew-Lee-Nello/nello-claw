@@ -5,12 +5,13 @@ import { WebSocketServer } from 'ws'
 import { existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { DASHBOARD_PORT, logger } from '@nc/core'
+import { DASHBOARD_PORT, logger, addLogTap } from '@nc/core'
 import { chatRouter } from './routes/chat.js'
 import { cronRouter } from './routes/cron.js'
 import { monitoringRouter } from './routes/monitoring.js'
 import { memoriesRouter } from './routes/memories.js'
 import { daemonsRouter } from './routes/daemons.js'
+import { subs, broadcastLog, type ClientSub } from './ws-broadcast.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -18,6 +19,9 @@ export interface DashboardHandle {
   close: () => void
   port: number
 }
+
+// Re-export for any consumer that wants to push events from outside the routes.
+export { sendToChat, broadcastLog } from './ws-broadcast.js'
 
 export function startDashboard(): DashboardHandle {
   const app = express()
@@ -30,7 +34,6 @@ export function startDashboard(): DashboardHandle {
   app.use('/api/memories', memoriesRouter())
   app.use('/api/daemons', daemonsRouter())
 
-  // Serve built UI. Compiled server lives at dist/server/index.js, UI at dist/ui/.
   const uiDir = join(__dirname, '..', 'ui')
   if (existsSync(uiDir)) {
     app.use(express.static(uiDir))
@@ -41,14 +44,26 @@ export function startDashboard(): DashboardHandle {
   const wss = new WebSocketServer({ server, path: '/ws' })
 
   wss.on('connection', (ws) => {
+    const sub: ClientSub = { ws, chatId: null, wantLogs: false }
+    subs.add(sub)
     ws.on('message', (data) => {
-      // Dashboard broadcast channel for streaming events - handled by route-level streaming in v1.1
-      logger.debug({ msg: String(data) }, 'ws message')
+      try {
+        const msg = JSON.parse(String(data))
+        if (msg && typeof msg === 'object') {
+          if (msg.type === 'subscribe' && typeof msg.chatId === 'string') sub.chatId = msg.chatId
+          if (msg.type === 'subscribe-logs') sub.wantLogs = true
+          if (msg.type === 'unsubscribe-logs') sub.wantLogs = false
+        }
+      } catch { /* ignore */ }
     })
+    ws.on('close', () => { subs.delete(sub) })
   })
 
-  // Port fallback - if DASHBOARD_PORT is in use (another daemon, leftover process,
-  // backup software), step up by 1 until we find a free port. Log which one won.
+  // Tap pino so every log line streams to subscribed clients.
+  const removeTap = addLogTap((e) => {
+    broadcastLog(e.level, e.msg, e.fields, e.ts)
+  })
+
   let actualPort = DASHBOARD_PORT
   const MAX_ATTEMPTS = 5
   let attempts = 0
@@ -74,7 +89,10 @@ export function startDashboard(): DashboardHandle {
   tryListen(DASHBOARD_PORT)
 
   return {
-    close: () => server.close(),
+    close: () => {
+      removeTap()
+      server.close()
+    },
     get port() { return actualPort },
   }
 }

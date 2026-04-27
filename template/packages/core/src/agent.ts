@@ -7,6 +7,15 @@ export interface RunAgentResult {
   newSessionId?: string
 }
 
+export type AgentEvent =
+  | { type: 'init'; sessionId: string | undefined }
+  | { type: 'thinking'; text?: string }
+  | { type: 'text'; text: string }
+  | { type: 'tool_use'; name: string; id: string }
+  | { type: 'tool_result'; id: string }
+  | { type: 'done'; text: string | null }
+  | { type: 'error'; error: string }
+
 /**
  * Run one turn of Claude Code.
  * - Uses bypassPermissions (unattended operation)
@@ -17,6 +26,19 @@ export async function runAgent(
   message: string,
   sessionId?: string,
   onTyping?: () => void
+): Promise<RunAgentResult> {
+  return runAgentStream(message, sessionId, undefined, onTyping)
+}
+
+/**
+ * Streaming variant — same return shape as runAgent, but fires onEvent for
+ * every SDK event so the dashboard can render incremental output.
+ */
+export async function runAgentStream(
+  message: string,
+  sessionId?: string,
+  onEvent?: (e: AgentEvent) => void,
+  onTyping?: () => void,
 ): Promise<RunAgentResult> {
   let typingTimer: NodeJS.Timeout | null = null
   if (onTyping) {
@@ -40,9 +62,12 @@ export async function runAgent(
     let text: string | null = null
 
     for await (const event of generator) {
-      if (event.type === 'system' && event.subtype === 'init') {
-        newSessionId = (event as any).session_id
-        const mcpStatuses = (event as any).mcp_servers
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const e = event as any
+      if (e.type === 'system' && e.subtype === 'init') {
+        newSessionId = e.session_id
+        onEvent?.({ type: 'init', sessionId: newSessionId })
+        const mcpStatuses = e.mcp_servers
         if (Array.isArray(mcpStatuses)) {
           for (const mcp of mcpStatuses) {
             if (mcp.status && mcp.status !== 'connected') {
@@ -50,16 +75,35 @@ export async function runAgent(
             }
           }
         }
-      }
-      if (event.type === 'result') {
-        // SDK shape: { type: 'result', subtype: 'success'|'error_*', result: string, ... }
-        // event.result IS the assistant's text (a string), not an object with a .result field.
-        // Earlier code did event.result?.result which always returned undefined -> "(no response)".
-        text = (event as any).result ?? null
+      } else if (e.type === 'assistant') {
+        const blocks = e.message?.content ?? []
+        for (const block of blocks) {
+          if (block.type === 'text' && block.text) {
+            onEvent?.({ type: 'text', text: block.text })
+          } else if (block.type === 'tool_use') {
+            onEvent?.({ type: 'tool_use', name: block.name ?? '', id: block.id ?? '' })
+          } else if (block.type === 'thinking' && block.thinking) {
+            onEvent?.({ type: 'thinking', text: block.thinking })
+          }
+        }
+      } else if (e.type === 'user') {
+        const blocks = e.message?.content ?? []
+        for (const block of blocks) {
+          if (block.type === 'tool_result') {
+            onEvent?.({ type: 'tool_result', id: block.tool_use_id ?? '' })
+          }
+        }
+      } else if (e.type === 'result') {
+        text = e.result ?? null
       }
     }
 
+    onEvent?.({ type: 'done', text })
     return { text, newSessionId }
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err)
+    onEvent?.({ type: 'error', error: errMsg })
+    throw err
   } finally {
     if (typingTimer) clearInterval(typingTimer)
   }
