@@ -63,12 +63,10 @@ export const DEFAULT_BUNDLE: Bundle = {
 
   // Default skill pack (always installed)
   skillPack: [
-    'karpathy-guidelines', 'find-skills', 'find-mcp', 'research',
-    'checkpoint', 'think', 'self-improving', 'simplify',
-    'vault-audit', 'update-config', 'fewer-permission-prompts',
+    'checkpoint', 'find-skills', 'install-doctor', 'karpathy-guidelines',
+    'research', 'self-improving', 'think', 'vault-audit',
   ],
-  // Extra abilities - auto-included so users get them on day 1
-  optionalSkills: ['process-transcript', 'process-calls', 'mcp-builder', 'mcp-implement'],
+  optionalSkills: [],
 
   platform: 'mac',
 }

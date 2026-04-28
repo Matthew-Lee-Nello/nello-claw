@@ -68,10 +68,29 @@ function toPosixPath(p) {
   return String(p).replace(/\\/g, '/')
 }
 
+// One-line description per MCP. CLAUDE.md.hbs renders these as the
+// "## Installed MCPs" bullet list, so any MCP added to .mcp.json.hbs
+// needs a row here too — otherwise the bullet shows the name with an
+// empty purpose.
+const MCP_PURPOSES = {
+  google: 'Gmail, Calendar, Drive, Docs, Sheets via workspace-mcp',
+  obsidian: 'read/write your vault directly',
+  exa: 'web research with citations',
+  apify: 'web scraping + Actor marketplace',
+  gitnexus: 'GitHub repo intelligence',
+  n8n: 'workflow automation',
+}
+
 function buildContext(bundle) {
   const installPathPosix = toPosixPath(INSTALL_PATH)
   const vaultPathPosix = toPosixPath(bundle.vaultPath || join(INSTALL_PATH, 'vault'))
   const escapedPath = installPathPosix.replace(/^\//, '-').replace(/\//g, '-')
+  // `mcps` stays a boolean map ({google: true, ...}) because .mcp.json.hbs
+  // does {{#if mcps.google}} checks. CLAUDE.md.hbs needs a real list to
+  // iterate with {{#each mcpsList}}, so build that here as [{name, purpose}].
+  const mcpsList = Object.entries(bundle.mcps || {})
+    .filter(([, on]) => !!on)
+    .map(([name]) => ({ name, purpose: MCP_PURPOSES[name] || '' }))
   return {
     ...bundle,
     installPath: installPathPosix,
@@ -82,6 +101,7 @@ function buildContext(bundle) {
     vaultPath: vaultPathPosix,
     env: bundle.keys || {},
     mcps: bundle.mcps || {},
+    mcpsList,
   }
 }
 
