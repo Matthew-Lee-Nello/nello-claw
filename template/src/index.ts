@@ -8,12 +8,9 @@ import { join } from 'node:path'
 import {
   initDatabase, runDecaySweep, logger, PROJECT_ROOT, STORE_DIR,
   TELEGRAM_BOT_TOKEN, ALLOWED_CHAT_IDS,
-  WEBEX_BOT_TOKEN, ALLOWED_WEBEX_EMAILS,
   registerTelegramBot, setTelegramRunning, setTelegramError, isTelegramPaused,
-  registerWebexHandle, setWebexRunning, setWebexError, isWebexPaused,
 } from '@nc/core'
 import { createBot, discoverChatId } from '@nc/bot-telegram'
-import { createWebexBot, type WebexFrameworkShim } from '@nc/bot-webex'
 import { initScheduler, stopScheduler } from '@nc/scheduler'
 import { startDashboard } from '@nc/dashboard/server'
 import * as voiceOnline from '@nc/voice-online'
@@ -128,33 +125,6 @@ async function main() {
     logger.warn('TELEGRAM_BOT_TOKEN missing - bot disabled, dashboard only')
   }
 
-  // Webex bot (optional second inbound channel). Mirrors the Telegram pattern:
-  // pause-aware via daemon-control flags. Fire-and-forget the start so a
-  // hanging webex API call doesn't block boot.
-  if (WEBEX_BOT_TOKEN && ALLOWED_WEBEX_EMAILS.length === 0) {
-    logger.warn('[security] WEBEX_BOT_TOKEN is set but ALLOWED_WEBEX_EMAILS is empty — Webex bot will reject ALL messages until you add emails to .env')
-  }
-
-  let webex: WebexFrameworkShim | null = null
-  if (WEBEX_BOT_TOKEN) {
-    createWebexBot()
-      .then(w => {
-        webex = w
-        registerWebexHandle(w)
-        setWebexRunning(!!w)
-        if (w) logger.info('[webex] handle registered')
-      })
-      .catch(err => {
-        const msg = err instanceof Error ? err.message : String(err)
-        setWebexError(msg)
-        logger.error({ err }, '[webex] failed to start — continuing without Webex transport')
-      })
-  } else {
-    logger.info('[webex] WEBEX_BOT_TOKEN not set — Webex transport disabled')
-  }
-  // mark unused suppression — webex pause is reachable via daemon-control flags
-  void isWebexPaused
-
   // Shutdown
   const shutdown = async () => {
     logger.info('shutting down')
@@ -162,10 +132,6 @@ async function main() {
     stopScheduler()
     dashboard.close()
     if (bot) { await bot.stop(); setTelegramRunning(false) }
-    if (webex) {
-      try { await webex.stop(); setWebexRunning(false) }
-      catch (err) { logger.warn({ err }, '[webex] stop failed (non-fatal)') }
-    }
     releaseLock()
     process.exit(0)
   }

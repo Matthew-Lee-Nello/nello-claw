@@ -19,13 +19,6 @@ export const ALLOWED_CHAT_IDS = (env['ALLOWED_CHAT_ID'] ?? '')
   .map(id => id.trim())
   .filter(id => id.length > 0)
 
-// Webex (optional second inbound channel)
-export const WEBEX_BOT_TOKEN = env['WEBEX_BOT_TOKEN'] ?? ''
-export const ALLOWED_WEBEX_EMAILS = (env['ALLOWED_WEBEX_EMAILS'] ?? '')
-  .split(',')
-  .map(e => e.trim().toLowerCase())
-  .filter(e => e.length > 0)
-
 // Voice
 export const GROQ_API_KEY = env['GROQ_API_KEY'] ?? ''
 

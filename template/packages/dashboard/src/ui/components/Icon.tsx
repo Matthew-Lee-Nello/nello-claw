@@ -8,7 +8,7 @@ export type IconName =
   | 'edit' | 'trash' | 'check' | 'play' | 'pause' | 'stop' | 'pin'
   | 'archive' | 'calendar' | 'alert' | 'info' | 'chevron-right'
   | 'chevron-down' | 'more' | 'command' | 'zap' | 'cpu' | 'memory'
-  | 'telegram' | 'webex' | 'filter' | 'save' | 'tag' | 'sparkle'
+  | 'telegram' | 'filter' | 'save' | 'tag' | 'sparkle'
   | 'power'
 
 interface Props {
@@ -65,7 +65,6 @@ export const Icon: React.FC<Props> = ({ name, size = 14, className, style }) => 
     case 'zap': return (<svg {...p}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>)
     case 'cpu': return (<svg {...p}><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="2" x2="9" y2="4"/><line x1="15" y1="2" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="22"/><line x1="15" y1="20" x2="15" y2="22"/><line x1="20" y1="9" x2="22" y2="9"/><line x1="20" y1="14" x2="22" y2="14"/><line x1="2" y1="9" x2="4" y2="9"/><line x1="2" y1="14" x2="4" y2="14"/></svg>)
     case 'memory': return (<svg {...p}><rect x="2" y="7" width="20" height="10" rx="1"/><line x1="6" y1="11" x2="6" y2="13"/><line x1="10" y1="11" x2="10" y2="13"/><line x1="14" y1="11" x2="14" y2="13"/><line x1="18" y1="11" x2="18" y2="13"/></svg>)
-    case 'webex': return (<svg {...p}><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>)
     case 'filter': return (<svg {...p}><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>)
     case 'save': return (<svg {...p}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>)
     case 'tag': return (<svg {...p}><path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>)

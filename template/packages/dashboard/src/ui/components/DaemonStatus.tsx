@@ -13,13 +13,8 @@ interface TelegramState extends BotState {
   username: string | null
 }
 
-interface WebexState extends BotState {
-  emailsConfigured: boolean
-}
-
 interface DaemonsResponse {
   telegram: TelegramState
-  webex?: WebexState
 }
 
 const POLL_MS = 5000
@@ -62,7 +57,7 @@ export default function DaemonStatus() {
 
   if (!data) return null
 
-  const act = async (kind: 'telegram' | 'webex', action: 'start' | 'stop' | 'reboot') => {
+  const act = async (kind: 'telegram', action: 'start' | 'stop' | 'reboot') => {
     setBusy(`${kind}-${action}`)
     try {
       if (action === 'reboot') {
@@ -88,16 +83,6 @@ export default function DaemonStatus() {
         busy={busy}
         onAct={act}
       />
-      {data.webex && (
-        <DaemonRow
-          kind="webex"
-          label="webex"
-          icon="webex"
-          state={data.webex}
-          busy={busy}
-          onAct={act}
-        />
-      )}
     </div>
   )
 }
@@ -105,12 +90,12 @@ export default function DaemonStatus() {
 function DaemonRow({
   kind, label, icon, state, busy, onAct,
 }: {
-  kind: 'telegram' | 'webex'
+  kind: 'telegram'
   label: string
   icon: IconName
   state: BotState
   busy: string | null
-  onAct: (kind: 'telegram' | 'webex', action: 'start' | 'stop' | 'reboot') => void
+  onAct: (kind: 'telegram', action: 'start' | 'stop' | 'reboot') => void
 }) {
   const status = statusOf(state)
   const isRunning = status === 'running'
