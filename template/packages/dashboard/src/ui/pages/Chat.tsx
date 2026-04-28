@@ -425,8 +425,7 @@ export default function Chat() {
                   </>
                 )}
               </div>
-              <div className="cr-time">{relTime(c.updated_at || c.created_at)}</div>
-              <div className="cr-archive" style={{ position: 'absolute', right: 8, display: 'none' }}>
+              <div className="cr-actions">
                 <button
                   className="btn btn-icon btn-ghost"
                   style={{ width: 22, height: 22 }}
@@ -439,9 +438,9 @@ export default function Chat() {
                   className="btn btn-icon btn-ghost"
                   style={{ width: 22, height: 22 }}
                   onClick={e => archive(c.id, e)}
-                  title="Archive"
+                  title="Delete (archive — restore from Archived tab)"
                 >
-                  <Icon name="archive" size={11} />
+                  <Icon name="trash" size={11} />
                 </button>
               </div>
             </div>
@@ -551,7 +550,7 @@ export default function Chat() {
                     ? <ReactMarkdown>{m.content}</ReactMarkdown>
                     : m.content}
                 </div>
-                <div className="meta">{m.role === 'user' ? 'you · just now' : 'Luke · just now'}</div>
+                <div className="meta">{m.role === 'user' ? 'you' : 'Luke'}</div>
               </div>
               {m.role === 'user' && <div className="avatar sm user">You</div>}
             </div>

@@ -375,6 +375,8 @@ button {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  text-align: center;
   gap: 6px;
   transition: background var(--t-color), color var(--t-color);
 }
@@ -710,6 +712,7 @@ td.cell-dim { color: var(--dim); }
   flex: 0 0 auto;
   align-self: flex-start;
 }
+/* Active-chat row hover-only action box (legacy — kept for compatibility). */
 .chat-row .cr-archive {
   position: absolute;
   right: 8px;
@@ -727,6 +730,18 @@ td.cell-dim { color: var(--dim); }
   justify-content: center;
 }
 .chat-row:hover .cr-archive { display: inline-flex; }
+
+/* New always-visible row actions (rename + delete). Time hides on hover so
+   the buttons aren't stacked underneath the timestamp. */
+.chat-row .cr-actions {
+  display: inline-flex;
+  gap: 2px;
+  flex: 0 0 auto;
+  align-items: center;
+  opacity: 0.6;
+  transition: opacity var(--t-color);
+}
+.chat-row:hover .cr-actions, .chat-row.active .cr-actions { opacity: 1; }
 .chat-row:hover .cr-time { display: none; }
 
 .chat-pane {
@@ -770,13 +785,22 @@ td.cell-dim { color: var(--dim); }
   border: 1px solid var(--border);
   color: var(--text);
   word-wrap: break-word;
-  white-space: pre-wrap;
 }
+/* User messages are plain text — preserve user line breaks. */
 .msg.user .bubble {
   background: var(--accent-soft);
   border-color: var(--accent-border);
   color: var(--text);
+  white-space: pre-wrap;
 }
+/* Assistant messages render markdown — let it own its own spacing.
+   pre-wrap on the wrapper would double up with markdown's block margins
+   and produce the ugly vertical gaps between paragraphs and lists. */
+.msg.assistant .bubble > * { margin: 0; }
+.msg.assistant .bubble > * + * { margin-top: 8px; }
+.msg.assistant .bubble ul, .msg.assistant .bubble ol { padding-left: 20px; }
+.msg.assistant .bubble li { margin: 2px 0; }
+.msg.assistant .bubble p { line-height: 1.55; }
 .msg .bubble code {
   font-family: var(--font-mono);
   font-size: 11px;
