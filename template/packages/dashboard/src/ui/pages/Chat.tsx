@@ -571,9 +571,7 @@ export default function Chat() {
           {busy && !streaming && (
             <div className="msg assistant">
               <div className="avatar sm">L</div>
-              <div className="bubble typing">
-                <span className="bdot" /><span className="bdot" /><span className="bdot" />
-              </div>
+              <div className="bubble typing"><span className="typing-text">thinking</span></div>
             </div>
           )}
 

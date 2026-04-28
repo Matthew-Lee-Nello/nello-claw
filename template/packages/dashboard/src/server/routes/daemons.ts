@@ -9,9 +9,13 @@ export function daemonsRouter(): Router {
   const r = Router()
 
   r.get('/', (_req, res) => {
+    // Only surface Webex when the user has provided a token. The wizard
+    // doesn't collect Webex creds yet, so for one-click installs there's
+    // nothing to show — hiding the row keeps the UI honest.
+    const webex = getWebexState()
     res.json({
       telegram: getTelegramState(),
-      webex: getWebexState(),
+      ...(webex.configured ? { webex } : {}),
     })
   })
 
