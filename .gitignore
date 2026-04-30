@@ -14,3 +14,16 @@ coverage/
 tsconfig.tsbuildinfo
 .vercel
 .env*.local
+
+# Local install artefacts — never commit (contain API keys + user-specific paths)
+bundle.json
+nello-claw-bundle.json
+.mcp.json
+claude_desktop_config.json
+brain-context.md
+.claude/
+vault/
+# Rendered-from-template files for local install runs (the .hbs is the source)
+/CLAUDE.md
+/AGENTS.md
+install.log
