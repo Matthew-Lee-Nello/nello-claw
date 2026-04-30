@@ -8,6 +8,7 @@ export default function Screen2Connections() {
   const setKey = (k: string, v: string) => update({ keys: { ...bundle.keys, [k]: v } })
 
   const tg = bundle.keys.TELEGRAM_BOT_TOKEN ?? ''
+  const chatId = bundle.keys.ALLOWED_CHAT_ID ?? ''
   const email = bundle.keys.GOOGLE_USER_EMAIL ?? ''
   const cid = bundle.keys.GOOGLE_OAUTH_CLIENT_ID ?? ''
   const secret = bundle.keys.GOOGLE_OAUTH_CLIENT_SECRET ?? ''
@@ -17,11 +18,12 @@ export default function Screen2Connections() {
   // to skip past required fields (Isaac's install ended up with cid=1 char,
   // email="k", exa=1 char which broke the daemon).
   const tgValid = /^\d+:[A-Za-z0-9_-]{30,}$/.test(tg.trim())
+  const chatIdValid = /^-?\d{5,}$/.test(chatId.trim())
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
   const cidValid = cid.length > 30 || cid.includes('apps.googleusercontent.com')
   const secretValid = secret.length > 20
   const exaValid = exa.length > 20
-  const ready = tgValid && emailValid && cidValid && secretValid && exaValid
+  const ready = tgValid && chatIdValid && emailValid && cidValid && secretValid && exaValid
 
   return (
     <div className="screen">
@@ -41,6 +43,19 @@ export default function Screen2Connections() {
         />
         <div className="panel-help">
           60-second walkthrough at <a href="/docs/telegram" target="_blank" rel="noopener">/docs/telegram</a>.
+        </div>
+      </div>
+      <div className="field">
+        <label>Your Telegram chat ID</label>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={chatId}
+          onChange={e => setKey('ALLOWED_CHAT_ID', e.target.value)}
+          placeholder="e.g. 123456789"
+        />
+        <div className="panel-help">
+          Open Telegram, search for <strong>@userinfobot</strong>, send it any message. It replies with your chat ID. Paste it here so the bot only listens to you.
         </div>
       </div>
 
